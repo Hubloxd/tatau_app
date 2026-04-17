@@ -42,19 +42,36 @@
 
         <div class="space-y-1">
           <p class="text-sm font-semibold capitalize leading-snug text-foreground">{{ user.user_type }}</p>
-          <p class="max-w-md text-sm leading-relaxed text-muted">
-            Opis profilu pojawi się tutaj po dodaniu edycji w ustawieniach.
-          </p>
+          @if (auth.user()?.bio) {
+            <p class="max-w-md whitespace-pre-wrap text-sm leading-relaxed text-foreground">
+              {{ auth.user()?.bio }}
+            </p>
+          } @else {
+            <p class="max-w-md text-sm text-muted">
+              Nie dodano jeszcze opisu — uzupełnij bio w ustawieniach konta.
+            </p>
+          }
         </div>
       </div>
 
       <div class="shrink-0">
-        <div
-          class="flex h-[77px] w-[77px] items-center justify-center rounded-full border border-border bg-accent/10 text-2xl font-semibold text-accent sm:h-[150px] sm:w-[150px] sm:text-4xl"
-          [attr.aria-label]="'Awatar użytkownika ' + user.username"
-        >
-          {{ initials(user.username) }}
-        </div>
+        @if (auth.user()?.avatar_url) {
+          <img
+            [src]="auth.user()!.avatar_url!"
+            alt=""
+            width="150"
+            height="150"
+            class="h-[77px] w-[77px] rounded-full border border-border object-cover sm:h-[150px] sm:w-[150px]"
+            [attr.aria-label]="'Awatar użytkownika ' + user.username"
+          />
+        } @else {
+          <div
+            class="flex h-[77px] w-[77px] items-center justify-center rounded-full border border-border bg-accent/10 text-2xl font-semibold text-accent sm:h-[150px] sm:w-[150px] sm:text-4xl"
+            [attr.aria-label]="'Awatar użytkownika ' + user.username"
+          >
+            {{ initials(user.username) }}
+          </div>
+        }
       </div>
     </header>
 

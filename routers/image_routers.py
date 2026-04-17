@@ -1,6 +1,14 @@
 import logging
 from services.storage_backend import delete_stored_file, store_uploaded_file
-from services.image_service import add_image, delete_image, get_image, get_user_images, get_feed_images
+from services.image_service import (
+    add_image,
+    delete_image,
+    get_image,
+    get_user_images,
+    get_user_saved_images,
+    get_feed_images,
+    get_feed_counts_for_images,
+)
 from services.recommendation_service import get_recommendations
 from database import get_db_session
 from fastapi import File, UploadFile
@@ -74,6 +82,29 @@ async def get_images(user_id: int, db: Session = Depends(get_db_session)):
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})
 
+
+@router.get("/saved/{user_id}")
+async def get_saved_images(user_id: int, db: Session = Depends(get_db_session)):
+    """Zdjęcia zapisane przez użytkownika (Ulubione)."""
+    try:
+        images = get_user_saved_images(db, user_id)
+        image_list = [
+            {
+                "id": image.id,
+                "url": image.image_url,
+                "description": image.description,
+                "user_id": image.user_id,
+                "username": getattr(image.owner, "username", f"User {image.user_id}"),
+                "user_type": getattr(image.owner, "user_type", "artist"),
+            }
+            for image in images
+        ]
+        return JSONResponse(content={"status": "success", "images": image_list})
+    except Exception as e:
+        logger.exception("get_saved_images failed")
+        return JSONResponse(status_code=500, content={"error": str(e)})
+
+
 @router.get("/image/{image_id}")
 async def get_single_image(image_id: int, db: Session = Depends(get_db_session)):
     """
@@ -114,6 +145,11 @@ async def get_feed(
     else:
         images = get_recommendations(db, user_id, limit, offset)
 
+    image_ids = [img.id for img in images]
+    comment_map, like_map, liked_ids = get_feed_counts_for_images(
+        db, image_ids, user_id
+    )
+
     image_list = [
         {
             "id": image.id,
@@ -122,6 +158,9 @@ async def get_feed(
             "user_id": image.user_id,
             "username": getattr(image.owner, "username", f"User {image.user_id}"),
             "user_type": getattr(image.owner, "user_type", "artist"),
+            "likes_count": like_map.get(image.id, 0),
+            "comments_count": comment_map.get(image.id, 0),
+            "user_liked": image.id in liked_ids if user_id else False,
         }
         for image in images
     ]

@@ -1,57 +1,67 @@
 @if (auth.user(); as u) {
   <aside
-    class="order-2 border-t border-border bg-card/50 lg:order-1 lg:w-56 lg:shrink-0 lg:border-r lg:border-t-0 lg:px-4 lg:py-8"
+    class="order-2 shrink-0 border-t border-border bg-card/50 lg:order-1 lg:flex lg:h-full lg:min-h-0 lg:w-56 lg:flex-col lg:self-stretch lg:border-r lg:border-t-0"
     aria-label="Menu boczne"
   >
-    <div class="flex flex-row gap-2 overflow-x-auto px-4 py-3 lg:flex-col lg:gap-1 lg:overflow-visible lg:px-0 lg:py-0">
-      <p class="hidden text-xs font-semibold uppercase tracking-wide text-muted lg:mb-3 lg:block">
-        Konto
-      </p>
-      <span
-        class="mb-0 hidden truncate text-sm font-medium lg:mb-4 lg:block"
-        [title]="u.username"
+    <div class="flex min-h-0 flex-1 flex-col px-4 py-3 lg:px-4 lg:py-8">
+      <div
+        class="flex min-h-0 flex-1 flex-col gap-2 overflow-x-auto lg:gap-1 lg:overflow-y-auto"
       >
-        {{ u.username }}
-      </span>
-      <a
-        routerLink="/home"
-        routerLinkActive="rounded-lg bg-accent/10 px-3 py-2 text-sm font-medium text-accent lg:w-full lg:text-left"
-        [routerLinkActiveOptions]="{ exact: true }"
-        class="whitespace-nowrap rounded-lg px-3 py-2 text-sm text-muted hover:bg-background hover:text-foreground lg:w-full lg:text-left"
-      >
-        Strona główna
-      </a>
-      <a
-        routerLink="/upload"
-        routerLinkActive="rounded-lg bg-accent/10 px-3 py-2 text-sm font-medium text-accent lg:w-full lg:text-left"
-        [routerLinkActiveOptions]="{ exact: true }"
-        class="whitespace-nowrap rounded-lg px-3 py-2 text-sm text-muted hover:bg-background hover:text-foreground lg:w-full lg:text-left"
-      >
-        Dodaj zdjęcie
-      </a>
-      <a
-        routerLink="/explore"
-        routerLinkActive="rounded-lg bg-accent/10 px-3 py-2 text-sm font-medium text-accent lg:w-full lg:text-left"
-        [routerLinkActiveOptions]="{ exact: true }"
-        class="whitespace-nowrap rounded-lg px-3 py-2 text-sm text-muted hover:bg-background hover:text-foreground lg:w-full lg:text-left"
-      >
-        Odkrywaj
-      </a>
-      <a
-        routerLink="/profile"
-        routerLinkActive="rounded-lg bg-accent/10 px-3 py-2 text-sm font-medium text-accent lg:w-full lg:text-left"
-        [routerLinkActiveOptions]="{ exact: true }"
-        class="whitespace-nowrap rounded-lg px-3 py-2 text-sm text-muted hover:bg-background hover:text-foreground lg:w-full lg:text-left"
-      >
-        Twój profil
-      </a>
-      <button
-        type="button"
-        class="mt-2 hidden w-full rounded-lg border border-border px-3 py-2 text-left text-sm text-muted hover:bg-background lg:block"
-        (click)="logout()"
-      >
-        Wyloguj się
-      </button>
+        <p class="hidden shrink-0 text-xs font-semibold uppercase tracking-wide text-muted lg:mb-3 lg:block">
+          Konto
+        </p>
+        <span
+          class="mb-0 hidden shrink-0 truncate text-sm font-medium lg:mb-4 lg:block"
+          [title]="u.username"
+        >
+          {{ u.username }}
+        </span>
+        <a
+          routerLink="/home"
+          routerLinkActive="rounded-lg bg-accent/10 px-3 py-2 text-sm font-medium text-accent lg:w-full lg:text-left"
+          [routerLinkActiveOptions]="{ exact: true }"
+          class="shrink-0 whitespace-nowrap rounded-lg px-3 py-2 text-sm text-muted hover:bg-background hover:text-foreground lg:w-full lg:text-left"
+        >
+          Strona główna
+        </a>
+        <a
+          routerLink="/upload"
+          routerLinkActive="rounded-lg bg-accent/10 px-3 py-2 text-sm font-medium text-accent lg:w-full lg:text-left"
+          [routerLinkActiveOptions]="{ exact: true }"
+          class="shrink-0 whitespace-nowrap rounded-lg px-3 py-2 text-sm text-muted hover:bg-background hover:text-foreground lg:w-full lg:text-left"
+        >
+          Dodaj zdjęcie
+        </a>
+        <a
+          routerLink="/ulubione"
+          routerLinkActive="rounded-lg bg-accent/10 px-3 py-2 text-sm font-medium text-accent lg:w-full lg:text-left"
+          [routerLinkActiveOptions]="{ exact: true }"
+          class="shrink-0 whitespace-nowrap rounded-lg px-3 py-2 text-sm text-muted hover:bg-background hover:text-foreground lg:w-full lg:text-left"
+        >
+          Ulubione
+        </a>
+        <a
+          routerLink="/explore"
+          routerLinkActive="rounded-lg bg-accent/10 px-3 py-2 text-sm font-medium text-accent lg:w-full lg:text-left"
+          [routerLinkActiveOptions]="{ exact: true }"
+          class="shrink-0 whitespace-nowrap rounded-lg px-3 py-2 text-sm text-muted hover:bg-background hover:text-foreground lg:w-full lg:text-left"
+        >
+          Odkrywaj
+        </a>
+        <a
+          routerLink="/profile"
+          routerLinkActive="rounded-lg bg-accent/10 px-3 py-2 text-sm font-medium text-accent lg:w-full lg:text-left"
+          [routerLinkActiveOptions]="{ exact: true }"
+          class="shrink-0 whitespace-nowrap rounded-lg px-3 py-2 text-sm text-muted hover:bg-background hover:text-foreground lg:w-full lg:text-left"
+        >
+          Twój profil
+        </a>
+      </div>
+      <div class="mt-auto hidden shrink-0 border-t border-border pt-4 lg:block">
+        <button type="button" class="btn-secondary w-full text-sm" (click)="logout()">
+          Wyloguj się
+        </button>
+      </div>
     </div>
   </aside>
 }

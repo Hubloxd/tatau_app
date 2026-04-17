@@ -1,7 +1,9 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Boolean, Column, Integer, String, Text
 from sqlalchemy.orm import relationship
 from models.base import Base
 from models.follow import follows
+
+
 class User(Base):
     __tablename__ = 'users'
 
@@ -9,7 +11,10 @@ class User(Base):
     username = Column(String, unique=True, index=True)
     email = Column(String, unique=True, index=True)
     password_hash = Column(String)
-    user_type = Column(String)  
+    user_type = Column(String)
+    bio = Column(Text, nullable=True)
+    avatar_url = Column(String, nullable=True)
+    profile_public = Column(Boolean, nullable=False, default=True)
 
     images = relationship("Image", back_populates="owner")
     interactions = relationship("Interaction", back_populates="user")

@@ -1,0 +1,221 @@
+@if (auth.user(); as u) {
+  <div class="dashboard-shell">
+    <app-dashboard-sidebar />
+
+    <main
+      id="main-content"
+      class="dashboard-main-scroll order-1 min-w-0 lg:order-2"
+      tabindex="-1"
+    >
+      <div class="mx-auto max-w-2xl px-4 pb-16 pt-6 sm:px-6">
+        <header class="mb-8">
+          <h1 class="text-2xl font-semibold tracking-tight text-foreground">
+            Ustawienia konta
+          </h1>
+          <p class="mt-1 text-sm text-muted">
+            E-mail, hasło, opis profilu, zdjęcie profilowe i widoczność konta.
+          </p>
+        </header>
+
+        @if (loading) {
+          <p class="py-12 text-center text-muted" role="status">Wczytywanie…</p>
+        } @else if (loadError) {
+          <p class="rounded-xl border border-destructive/30 bg-card p-6 text-center text-destructive">
+            {{ loadError }}
+          </p>
+        } @else {
+          <!-- Awatar -->
+          <section
+            class="mb-8 rounded-2xl border border-border bg-card p-5 shadow-sm"
+            aria-labelledby="avatar-heading"
+          >
+            <h2 id="avatar-heading" class="text-sm font-semibold text-foreground">
+              Zdjęcie profilowe
+            </h2>
+            <p class="mt-1 text-xs text-muted">
+              Kwadratowe zdjęcie wyświetlane na profilu. Przeciągnij plik lub kliknij pole.
+            </p>
+            <div class="mt-4 flex flex-col items-start gap-4 sm:flex-row sm:items-center">
+              @if (u.avatar_url) {
+                <img
+                  [src]="u.avatar_url"
+                  alt=""
+                  width="96"
+                  height="96"
+                  class="h-24 w-24 shrink-0 rounded-full border border-border object-cover"
+                />
+              } @else {
+                <div
+                  class="flex h-24 w-24 shrink-0 items-center justify-center rounded-full border border-border bg-accent/10 text-2xl font-semibold text-accent"
+                  aria-hidden="true"
+                >
+                  {{ (u.username.charAt(0) || '?').toUpperCase() }}
+                </div>
+              }
+              <div class="min-w-0 flex-1">
+                <app-photo-dropzone
+                  #avatarDropzone
+                  class="block w-full max-w-md"
+                  (fileSelected)="onAvatarFile($event)"
+                />
+                @if (avatarUploading) {
+                  <p class="mt-2 text-xs text-muted" role="status">Przesyłanie…</p>
+                }
+                @if (avatarError) {
+                  <p class="field-error mt-2" role="alert">{{ avatarError }}</p>
+                }
+              </div>
+            </div>
+          </section>
+
+          <!-- Profil -->
+          <form
+            class="mb-8 rounded-2xl border border-border bg-card p-5 shadow-sm"
+            (ngSubmit)="saveProfile()"
+            [formGroup]="profileForm"
+          >
+            <h2 class="text-sm font-semibold text-foreground">Profil</h2>
+            <p class="mt-1 text-xs text-muted">Dane widoczne na koncie i przy publikacji.</p>
+
+            <div class="mt-4 space-y-4">
+              <div>
+                <label class="field-label" for="settings-email">E-mail</label>
+                <input
+                  id="settings-email"
+                  type="email"
+                  class="input-field"
+                  formControlName="email"
+                  autocomplete="email"
+                />
+                @if (profileForm.controls.email.invalid && profileForm.controls.email.touched) {
+                  <p class="field-error">Podaj prawidłowy adres e-mail.</p>
+                }
+              </div>
+
+              <div>
+                <label class="field-label" for="settings-bio">Bio</label>
+                <textarea
+                  id="settings-bio"
+                  class="input-field min-h-[100px] resize-y"
+                  rows="4"
+                  formControlName="bio"
+                  placeholder="Krótko o sobie, stylu pracy…"
+                  maxlength="2000"
+                ></textarea>
+                <p class="mt-1 text-xs text-muted">
+                  {{ profileForm.controls.bio.value.length || 0 }}/2000
+                </p>
+              </div>
+
+              <div class="flex items-start gap-3 rounded-lg border border-border bg-background/50 px-3 py-3">
+                <input
+                  id="settings-public"
+                  type="checkbox"
+                  formControlName="profile_public"
+                  class="mt-1 h-4 w-4 rounded border-border text-accent focus-visible:ring-2 focus-visible:ring-ring"
+                />
+                <div>
+                  <label for="settings-public" class="text-sm font-medium text-foreground">
+                    Profil publiczny
+                  </label>
+                  <p class="mt-0.5 text-xs text-muted">
+                    Gdy wyłączysz, w przyszłości ograniczymy widoczność treści dla osób
+                    niezalogowanych (logika po stronie serwera — w przygotowaniu).
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            @if (profileError) {
+              <p class="field-error mt-4" role="alert">{{ profileError }}</p>
+            }
+            @if (profileSuccess) {
+              <p class="mt-4 text-sm text-foreground" role="status">
+                Zapisano zmiany profilu.
+              </p>
+            }
+
+            <button type="submit" class="btn-primary mt-4" [disabled]="profileSaving">
+              @if (profileSaving) {
+                Zapisywanie…
+              } @else {
+                Zapisz profil
+              }
+            </button>
+          </form>
+
+          <!-- Hasło -->
+          <form
+            class="rounded-2xl border border-border bg-card p-5 shadow-sm"
+            (ngSubmit)="savePassword()"
+            [formGroup]="passwordForm"
+          >
+            <h2 class="text-sm font-semibold text-foreground">Hasło</h2>
+            <p class="mt-1 text-xs text-muted">Minimum 8 znaków. Wypełnij wszystkie pola, aby zmienić hasło.</p>
+
+            <div class="mt-4 space-y-4">
+              <div>
+                <label class="field-label" for="old-pw">Obecne hasło</label>
+                <input
+                  id="old-pw"
+                  type="password"
+                  class="input-field"
+                  formControlName="oldPassword"
+                  autocomplete="current-password"
+                />
+              </div>
+              <div>
+                <label class="field-label" for="new-pw">Nowe hasło</label>
+                <input
+                  id="new-pw"
+                  type="password"
+                  class="input-field"
+                  formControlName="newPassword"
+                  autocomplete="new-password"
+                />
+                @if (
+                  passwordForm.controls.newPassword.invalid &&
+                  passwordForm.controls.newPassword.touched
+                ) {
+                  <p class="field-error">Minimum 8 znaków.</p>
+                }
+              </div>
+              <div>
+                <label class="field-label" for="confirm-pw">Powtórz nowe hasło</label>
+                <input
+                  id="confirm-pw"
+                  type="password"
+                  class="input-field"
+                  formControlName="confirmPassword"
+                  autocomplete="new-password"
+                />
+                @if (passwordMismatch() && passwordForm.touched) {
+                  <p class="field-error">Hasła muszą być takie same.</p>
+                }
+              </div>
+            </div>
+
+            @if (passwordError) {
+              <p class="field-error mt-4" role="alert">{{ passwordError }}</p>
+            }
+            @if (passwordSuccess) {
+              <p class="mt-4 text-sm text-foreground" role="status">Hasło zostało zmienione.</p>
+            }
+
+            <button type="submit" class="btn-primary mt-4" [disabled]="passwordSaving">
+              @if (passwordSaving) {
+                Zmienianie…
+              } @else {
+                Zmień hasło
+              }
+            </button>
+          </form>
+
+          <p class="mt-8 text-center">
+            <a routerLink="/profile" class="link-accent text-sm">Wróć do profilu</a>
+          </p>
+        }
+      </div>
+    </main>
+  </div>
+}

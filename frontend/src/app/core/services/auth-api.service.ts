@@ -16,6 +16,9 @@ export interface LoginResponse {
     username: string;
     email: string;
     user_type: string;
+    bio?: string | null;
+    avatar_url?: string | null;
+    profile_public?: boolean;
   };
 }
 

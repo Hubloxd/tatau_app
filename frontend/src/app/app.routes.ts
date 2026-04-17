@@ -37,6 +37,12 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'ulubione',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./pages/ulubione/ulubione').then((m) => m.UlubioneComponent),
+  },
+  {
     path: 'image/:imageId',
     loadComponent: () =>
       import('./pages/image-detail/image-detail').then(
@@ -77,14 +83,7 @@ export const routes: Routes = [
     path: 'settings',
     canActivate: [authGuard],
     loadComponent: () =>
-      import('./pages/placeholder/placeholder').then(
-        (m) => m.PlaceholderComponent,
-      ),
-    data: {
-      pageTitle: 'Ustawienia konta',
-      body:
-        'Zmiana hasła, e-maila i opisu profilu — w przygotowaniu. Wkrótce skonfigurujesz konto w tym miejscu.',
-    },
+      import('./pages/settings/settings').then((m) => m.SettingsComponent),
   },
   { path: '**', redirectTo: '' },
 ];

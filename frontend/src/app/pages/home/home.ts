@@ -11,7 +11,7 @@ import {
   inject,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { DashboardSidebarComponent } from '../../shared/ui/dashboard-sidebar/dashboard-sidebar';
 import { PhotoDropzoneComponent } from '../../shared/ui/photo-dropzone/photo-dropzone';
@@ -19,6 +19,7 @@ import {
   FeedApiService,
   type FeedImage,
 } from '../../core/services/feed-api.service';
+import { ImageDetailApiService } from '../../core/services/image-detail-api.service';
 
 const PAGE_SIZE = 12;
 
@@ -35,13 +36,16 @@ const PAGE_SIZE = 12;
 })
 export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
   protected readonly auth = inject(AuthService);
-  private readonly router = inject(Router);
   private readonly feedApi = inject(FeedApiService);
+  private readonly imageInteractions = inject(ImageDetailApiService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly platformId = inject(PLATFORM_ID);
 
   @ViewChild('scrollSentinel', { read: ElementRef })
   private sentinel?: ElementRef<HTMLElement>;
+
+  @ViewChild('mainScroll', { read: ElementRef })
+  private mainScroll?: ElementRef<HTMLElement>;
 
   @ViewChild('dropzone') private dropzone?: PhotoDropzoneComponent;
 
@@ -60,6 +64,9 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
   protected uploadOk = false;
 
   private observer: IntersectionObserver | null = null;
+
+  /** Szybki like z siatki — id obrazu w trakcie zapisu */
+  private readonly likeBusyIds = new Set<number>();
 
   ngOnInit(): void {
     if (!isPlatformBrowser(this.platformId)) {
@@ -81,13 +88,14 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
     if (!el || typeof IntersectionObserver === 'undefined') {
       return;
     }
+    const scrollRoot = this.mainScroll?.nativeElement ?? null;
     this.observer = new IntersectionObserver(
       (entries) => {
         if (entries.some((e) => e.isIntersecting)) {
           this.loadMore();
         }
       },
-      { root: null, rootMargin: '480px', threshold: 0 },
+      { root: scrollRoot, rootMargin: '480px', threshold: 0 },
     );
     this.observer.observe(el);
   }
@@ -206,12 +214,39 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
-  protected logout(): void {
-    this.auth.logout();
-    void this.router.navigateByUrl('/');
-  }
-
   protected retryFeed(): void {
     this.loadInitial();
+  }
+
+  protected isLikeBusy(imageId: number): boolean {
+    return this.likeBusyIds.has(imageId);
+  }
+
+  protected quickLike(event: MouseEvent, item: FeedImage): void {
+    event.preventDefault();
+    event.stopPropagation();
+    const u = this.auth.user();
+    if (!u || item.user_liked || this.likeBusyIds.has(item.id)) {
+      return;
+    }
+    this.likeBusyIds.add(item.id);
+    this.imageInteractions.recordInteraction(item.id, u.id, 'like').subscribe({
+      next: (res) => {
+        queueMicrotask(() => {
+          this.likeBusyIds.delete(item.id);
+          if (res.status === 'success') {
+            item.user_liked = true;
+            item.likes_count += 1;
+          }
+          this.cdr.markForCheck();
+        });
+      },
+      error: () => {
+        queueMicrotask(() => {
+          this.likeBusyIds.delete(item.id);
+          this.cdr.markForCheck();
+        });
+      },
+    });
   }
 }

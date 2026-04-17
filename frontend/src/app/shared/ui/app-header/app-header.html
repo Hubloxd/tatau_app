@@ -45,9 +45,6 @@
         >
           Profil
         </a>
-        <span class="max-w-[10rem] truncate text-sm text-muted" [title]="auth.user()?.username">
-          {{ auth.user()?.username }}
-        </span>
         <button type="button" class="btn-secondary text-sm" (click)="logout()">
           Wyloguj
         </button>

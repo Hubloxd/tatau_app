@@ -1,15 +1,18 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, Session, configure_mappers
-from contextlib import contextmanager
-from dotenv import load_dotenv
-from urllib.parse import urlparse
+import logging
 import os
+from contextlib import contextmanager
+from urllib.parse import urlparse
 
+from dotenv import load_dotenv
+from sqlalchemy import create_engine, inspect, text
+from sqlalchemy.orm import Session, configure_mappers, sessionmaker
 
 from models import Base  # ensure all models are registered, incl. comments
 
 load_dotenv()
 configure_mappers()
+
+logger = logging.getLogger(__name__)
 
 
 def build_sqlalchemy_url() -> str:
@@ -33,6 +36,35 @@ engine = create_engine(build_sqlalchemy_url(), echo=True)
 
 # Ensure tables exist (no-op if already present)
 Base.metadata.create_all(engine)
+
+
+def ensure_user_profile_columns() -> None:
+    """Dodaje kolumny profilu do istniejącej tabeli users (PostgreSQL)."""
+    try:
+        insp = inspect(engine)
+        tables = insp.get_table_names()
+        if "users" not in tables:
+            return
+        cols = {c["name"] for c in insp.get_columns("users")}
+        with engine.begin() as conn:
+            if "bio" not in cols:
+                conn.execute(text("ALTER TABLE users ADD COLUMN bio TEXT"))
+                logger.info("Migracja: dodano kolumnę users.bio")
+            if "avatar_url" not in cols:
+                conn.execute(text("ALTER TABLE users ADD COLUMN avatar_url VARCHAR"))
+                logger.info("Migracja: dodano kolumnę users.avatar_url")
+            if "profile_public" not in cols:
+                conn.execute(
+                    text(
+                        "ALTER TABLE users ADD COLUMN profile_public BOOLEAN NOT NULL DEFAULT true"
+                    )
+                )
+                logger.info("Migracja: dodano kolumnę users.profile_public")
+    except Exception as e:
+        logger.warning("Nie udało się zweryfikować migracji users: %s", e)
+
+
+ensure_user_profile_columns()
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 

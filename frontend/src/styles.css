@@ -15,6 +15,10 @@
 }
 
 @layer base {
+  :root {
+    /* Wysokość topbara (app-header): dopasuj, jeśli zmienisz padding/nawigację */
+    --app-header-height: 4rem;
+  }
   html {
     @apply scroll-smooth antialiased;
   }
@@ -41,5 +45,17 @@
   }
   .field-error {
     @apply mt-1 text-sm text-destructive;
+  }
+  /**
+   * Pulpit: pełna wysokość pod topbarem, scroll tylko w .dashboard-main-scroll.
+   * Sidebar zostaje przy górze kolumny, nie przewija się z feedem.
+   */
+  .dashboard-shell {
+    @apply flex min-h-0 flex-col overflow-hidden lg:flex-row;
+    height: calc(100dvh - var(--app-header-height));
+    max-height: calc(100dvh - var(--app-header-height));
+  }
+  .dashboard-main-scroll {
+    @apply min-h-0 flex-1 overflow-x-hidden overflow-y-auto;
   }
 }
