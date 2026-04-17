@@ -29,6 +29,21 @@ export const routes: Routes = [
       import('./pages/home/home').then((m) => m.HomeComponent),
   },
   {
+    path: 'upload',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./pages/photo-upload/photo-upload').then(
+        (m) => m.PhotoUploadComponent,
+      ),
+  },
+  {
+    path: 'image/:imageId',
+    loadComponent: () =>
+      import('./pages/image-detail/image-detail').then(
+        (m) => m.ImageDetailComponent,
+      ),
+  },
+  {
     path: 'feed',
     loadComponent: () =>
       import('./pages/placeholder/placeholder').then(
@@ -54,14 +69,21 @@ export const routes: Routes = [
   },
   {
     path: 'profile',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./pages/profile/profile').then((m) => m.ProfileComponent),
+  },
+  {
+    path: 'settings',
+    canActivate: [authGuard],
     loadComponent: () =>
       import('./pages/placeholder/placeholder').then(
         (m) => m.PlaceholderComponent,
       ),
     data: {
-      pageTitle: 'Profil',
+      pageTitle: 'Ustawienia konta',
       body:
-        'Twój profil i galeria — w przygotowaniu. Po zalogowaniu zobaczysz tu swoje zdjęcia.',
+        'Zmiana hasła, e-maila i opisu profilu — w przygotowaniu. Wkrótce skonfigurujesz konto w tym miejscu.',
     },
   },
   { path: '**', redirectTo: '' },

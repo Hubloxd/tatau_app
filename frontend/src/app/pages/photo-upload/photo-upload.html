@@ -1,0 +1,73 @@
+@if (auth.user()) {
+  <div class="flex min-h-[calc(100dvh-4rem)] flex-col lg:flex-row">
+    <app-dashboard-sidebar />
+
+    <main id="main-content" class="order-1 min-w-0 flex-1 lg:order-2" tabindex="-1">
+      <div class="mx-auto max-w-3xl px-4 pb-12 pt-6 sm:px-6">
+        <header class="mb-6">
+          <h1 class="text-2xl font-semibold tracking-tight text-foreground">
+            Dodaj zdjęcie
+          </h1>
+          <p class="mt-1 text-sm text-muted">
+            Opublikuj tatuaż lub inspirację — pojawi się w feedzie obserwujących.
+          </p>
+        </header>
+
+        <section
+          class="rounded-2xl border border-border bg-card p-4 shadow-sm"
+          aria-labelledby="upload-photo-heading"
+        >
+          <h2 id="upload-photo-heading" class="text-sm font-semibold text-foreground">
+            Nowy post
+          </h2>
+          <p class="mt-1 text-xs text-muted">
+            Przeciągnij plik na pole lub kliknij, aby wybrać z dysku.
+          </p>
+
+          <label class="mt-4 block">
+            <span class="field-label">Opis (opcjonalnie)</span>
+            <textarea
+              class="input-field min-h-[88px] resize-y"
+              rows="3"
+              [(ngModel)]="postText"
+              name="postText"
+              placeholder="Np. kto wykonał, styl, co Cię w tym kręci…"
+            ></textarea>
+          </label>
+
+          <div class="mt-4">
+            <span class="field-label">Zdjęcie</span>
+            <app-photo-dropzone
+              #dropzone
+              class="mt-2 block"
+              (fileSelected)="onFileSelected($event)"
+            />
+          </div>
+
+          <div class="mt-4 flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              class="btn-primary"
+              [disabled]="uploadSubmitting || !selectedFile"
+              [attr.aria-busy]="uploadSubmitting"
+              (click)="submitPost()"
+            >
+              @if (uploadSubmitting) {
+                Publikowanie…
+              } @else {
+                Opublikuj
+              }
+            </button>
+            <a routerLink="/home" class="text-sm text-muted underline-offset-2 hover:text-foreground hover:underline">
+              Wróć do feedu
+            </a>
+          </div>
+
+          @if (uploadError) {
+            <p class="field-error mt-3" role="alert">{{ uploadError }}</p>
+          }
+        </section>
+      </div>
+    </main>
+  </div>
+}

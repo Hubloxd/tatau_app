@@ -84,13 +84,16 @@ async def get_single_image(image_id: int, db: Session = Depends(get_db_session))
         if not image:
             return JSONResponse(status_code=404, content={"error": "Image not found"})
         
+        owner = image.owner
         image_data = {
             "id": image.id,
             "url": image.image_url,
             "description": image.description,
-            "user_id": image.user_id
+            "user_id": image.user_id,
+            "username": getattr(owner, "username", None) if owner else None,
+            "user_type": getattr(owner, "user_type", None) if owner else None,
         }
-        
+
         return JSONResponse(content={"status": "success", "image": image_data})
     
     except Exception as e:
@@ -109,7 +112,7 @@ async def get_feed(
     if search_term:
         images = get_feed_images(db, limit, offset, search_term)
     else:
-        images = get_recommendations(db, user_id, limit)
+        images = get_recommendations(db, user_id, limit, offset)
 
     image_list = [
         {
