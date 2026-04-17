@@ -43,6 +43,7 @@ class PasswordChangeRequest(BaseModel):
 
 
 def _user_public_dict(user):
+    """Pełne dane (logowanie / właściciel)."""
     return {
         "id": user.id,
         "username": user.username,
@@ -52,6 +53,32 @@ def _user_public_dict(user):
         "avatar_url": getattr(user, "avatar_url", None),
         "profile_public": getattr(user, "profile_public", True),
     }
+
+
+def _user_profile_for_viewer(user, viewer_id: int | None):
+    """
+    Widok profilu dla obserwatora. Bez e-maila dla obcych; bio ukryte przy profilu prywatnym
+    (chyba że viewer to właściciel).
+    """
+    is_self = viewer_id is not None and viewer_id == user.id
+    public = getattr(user, "profile_public", True)
+    out = {
+        "id": user.id,
+        "username": user.username,
+        "user_type": user.user_type,
+        "avatar_url": getattr(user, "avatar_url", None),
+        "profile_public": public,
+    }
+    if is_self:
+        out["email"] = user.email
+        out["bio"] = getattr(user, "bio", None)
+        return out
+    if public:
+        out["bio"] = getattr(user, "bio", None)
+    else:
+        out["bio"] = None
+        out["profile_limited"] = True
+    return out
 
 @router.post("/register_user")
 async def register_user(username: str, email: str, password: str, user_type: str, db: Session = Depends(get_db_session)):
@@ -138,7 +165,7 @@ async def get_user_details(user_id: int, follower_id: int | None = None, db: Ses
         if follower_id:
             follow_state = is_following(db, follower_id, user_id)
 
-        u = _user_public_dict(user)
+        u = _user_profile_for_viewer(user, follower_id)
         u["is_following"] = follow_state
         return JSONResponse(content={"status": "success", "user": u})
     except Exception as e:

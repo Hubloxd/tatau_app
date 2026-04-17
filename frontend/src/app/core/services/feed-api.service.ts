@@ -9,6 +9,7 @@ export interface FeedImage {
   user_id: number;
   username: string;
   user_type: string;
+  avatar_url?: string | null;
   /** Polubienia (interactions typu like) */
   likes_count: number;
   /** Komentarze z tabeli comments */

@@ -222,6 +222,15 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
     return this.likeBusyIds.has(imageId);
   }
 
+  protected feedInitials(username: string): string {
+    const parts = username.trim().split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) {
+      return (parts[0]!.charAt(0) + parts[1]!.charAt(0)).toUpperCase();
+    }
+    const s = parts[0] ?? username;
+    return (s.slice(0, 1) || '?').toUpperCase();
+  }
+
   protected quickLike(event: MouseEvent, item: FeedImage): void {
     event.preventDefault();
     event.stopPropagation();

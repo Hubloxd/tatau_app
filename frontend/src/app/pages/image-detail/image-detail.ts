@@ -217,4 +217,13 @@ export class ImageDetailComponent implements OnInit {
   protected back(): void {
     void this.router.navigateByUrl('/home');
   }
+
+  protected detailInitials(username: string | null, userId: number): string {
+    const base = (username ?? '').trim() || `u${userId}`;
+    const parts = base.split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) {
+      return (parts[0]!.charAt(0) + parts[1]!.charAt(0)).toUpperCase();
+    }
+    return parts[0]!.slice(0, 2).toUpperCase() || '?';
+  }
 }

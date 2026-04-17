@@ -9,6 +9,7 @@ from services.image_service import (
     get_feed_images,
     get_feed_counts_for_images,
 )
+from services.user_service import get_user
 from services.recommendation_service import get_recommendations
 from database import get_db_session
 from fastapi import File, UploadFile
@@ -57,17 +58,45 @@ async def delete_file(image_id: int, db: Session = Depends(get_db_session)):
             return JSONResponse(status_code=500, content={"error": str(e)})
         
 
+def _can_view_user_gallery(
+    db: Session, profile_user_id: int, viewer_id: int | None
+) -> bool:
+    """Właściciel lub profil publiczny; bez viewer_id prywatna galeria niewidoczna."""
+    profile_user = get_user(db, profile_user_id)
+    if not profile_user:
+        return False
+    if viewer_id is not None and viewer_id == profile_user_id:
+        return True
+    return getattr(profile_user, "profile_public", True)
+
+
 @router.get("/images/{user_id}")
-async def get_images(user_id: int, db: Session = Depends(get_db_session)):
+async def get_images(
+    user_id: int,
+    viewer_id: int | None = None,
+    db: Session = Depends(get_db_session),
+):
     """
-    Fetch all images for a specific user to display them on the page
+    Fetch all images for a specific user to display them on the page.
+    Dla profilu prywatnego zwraca pustą listę i gallery_hidden (poza właścicielem).
     """
     try:
+        if not get_user(db, user_id):
+            return JSONResponse(status_code=404, content={"error": "User not found"})
+
+        if not _can_view_user_gallery(db, user_id, viewer_id):
+            return JSONResponse(
+                content={
+                    "status": "success",
+                    "images": [],
+                    "gallery_hidden": True,
+                }
+            )
+
         images = get_user_images(db, user_id)
         if not images:
             return JSONResponse(content={"status": "success", "images": []})
-        
-        # Convert images to a list of dictionaries with relevant information
+
         image_list = [
             {
                 "id": image.id,
@@ -76,9 +105,9 @@ async def get_images(user_id: int, db: Session = Depends(get_db_session)):
             }
             for image in images
         ]
-        
+
         return JSONResponse(content={"status": "success", "images": image_list})
-    
+
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})
 
@@ -123,6 +152,7 @@ async def get_single_image(image_id: int, db: Session = Depends(get_db_session))
             "user_id": image.user_id,
             "username": getattr(owner, "username", None) if owner else None,
             "user_type": getattr(owner, "user_type", None) if owner else None,
+            "avatar_url": getattr(owner, "avatar_url", None) if owner else None,
         }
 
         return JSONResponse(content={"status": "success", "image": image_data})
@@ -158,6 +188,7 @@ async def get_feed(
             "user_id": image.user_id,
             "username": getattr(image.owner, "username", f"User {image.user_id}"),
             "user_type": getattr(image.owner, "user_type", "artist"),
+            "avatar_url": getattr(image.owner, "avatar_url", None),
             "likes_count": like_map.get(image.id, 0),
             "comments_count": comment_map.get(image.id, 0),
             "user_liked": image.id in liked_ids if user_id else False,

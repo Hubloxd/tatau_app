@@ -9,6 +9,7 @@ export interface ImageDetail {
   user_id: number;
   username: string | null;
   user_type: string | null;
+  avatar_url?: string | null;
 }
 
 export interface ImageDetailResponse {

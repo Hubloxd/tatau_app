@@ -37,12 +37,43 @@
       <div class="w-full min-w-0 lg:w-96 lg:shrink-0">
         <header class="border-b border-border pb-4">
           <p class="text-xs font-medium uppercase tracking-wide text-accent">Publikacja</p>
-          <h1 class="mt-1 text-xl font-semibold text-foreground">
-            {{ image.username || 'Użytkownik #' + image.user_id }}
-          </h1>
-          @if (image.user_type) {
-            <p class="text-sm capitalize text-muted">{{ image.user_type }}</p>
-          }
+          <div class="mt-3 flex items-center gap-3">
+            <a
+              [routerLink]="['/profile', image.user_id]"
+              class="shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+              [attr.aria-label]="'Profil: ' + (image.username || image.user_id)"
+            >
+              @if (image.avatar_url) {
+                <img
+                  [src]="image.avatar_url"
+                  alt=""
+                  width="48"
+                  height="48"
+                  class="h-12 w-12 rounded-full border border-border object-cover"
+                />
+              } @else {
+                <div
+                  class="flex h-12 w-12 items-center justify-center rounded-full border border-border bg-accent/15 text-lg font-semibold text-accent"
+                  aria-hidden="true"
+                >
+                  {{ detailInitials(image.username, image.user_id) }}
+                </div>
+              }
+            </a>
+            <div class="min-w-0">
+              <h1 class="text-xl font-semibold text-foreground">
+                <a
+                  [routerLink]="['/profile', image.user_id]"
+                  class="underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+                >
+                  {{ image.username || 'Użytkownik #' + image.user_id }}
+                </a>
+              </h1>
+              @if (image.user_type) {
+                <p class="text-sm capitalize text-muted">{{ image.user_type }}</p>
+              }
+            </div>
+          </div>
           @if (image.description) {
             <p class="mt-3 text-sm leading-relaxed text-foreground">{{ image.description }}</p>
           }
@@ -122,7 +153,14 @@
           <ul class="mt-4 space-y-3" role="list">
             @for (c of comments; track c.id) {
               <li class="rounded-lg border border-border bg-card/80 px-3 py-2">
-                <p class="text-sm font-medium text-foreground">{{ c.username }}</p>
+                <p class="text-sm font-medium text-foreground">
+                  <a
+                    [routerLink]="['/profile', c.user_id]"
+                    class="underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+                  >
+                    {{ c.username }}
+                  </a>
+                </p>
                 <p class="mt-1 text-sm text-foreground">{{ c.content }}</p>
                 <p class="mt-1 text-xs text-muted">{{ c.timestamp | date: 'short' }}</p>
               </li>
