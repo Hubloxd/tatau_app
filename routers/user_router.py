@@ -1,4 +1,3 @@
-from google_cloud.client import upload_cs_file, download_cs_file, delete_cs_file, BUCKET_NAME
 from services.user_service import (
     add_user,
     delete_user,
@@ -15,15 +14,10 @@ from services.user_service import (
     is_following,
 )
 from database import get_db_session
-from fastapi import FastAPI, File, UploadFile
 from fastapi.responses import JSONResponse
-from fastapi import APIRouter, File, UploadFile, Depends
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
-import os
-from google.cloud import storage
-import shutil
-import uuid
 import traceback
 
 router = APIRouter(prefix="/user", tags=["user"])

@@ -1,0 +1,64 @@
+<main id="main-content" class="px-4 pb-20 pt-10 sm:px-6" tabindex="-1">
+  @if (auth.user(); as u) {
+    <div class="mx-auto max-w-2xl text-center">
+      <p class="text-sm font-medium uppercase tracking-wider text-accent">
+        Witaj z powrotem
+      </p>
+      <h1
+        class="mt-3 text-3xl font-semibold tracking-tight text-foreground sm:text-4xl"
+      >
+        Cześć, {{ u.username }}
+      </h1>
+      <p class="mt-4 text-muted">
+        Jesteś zalogowany jako
+        <span class="font-medium text-foreground">{{
+          u.user_type === 'artist'
+            ? 'artysta tatuażu'
+            : u.user_type === 'studio'
+              ? 'studio tatuażu'
+              : 'klient'
+        }}</span
+        >. Poniżej szybkie skróty — pełne widoki pojawią się w kolejnych iteracjach.
+      </p>
+
+      <div
+        class="mt-12 grid gap-4 text-left sm:grid-cols-3"
+        aria-label="Skróty do sekcji aplikacji"
+      >
+        <a
+          routerLink="/feed"
+          class="rounded-xl border border-border bg-card p-5 shadow-sm transition hover:border-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <h2 class="font-semibold text-foreground">Dla Ciebie</h2>
+          <p class="mt-2 text-sm text-muted">Feed dopasowany do Ciebie.</p>
+        </a>
+        <a
+          routerLink="/explore"
+          class="rounded-xl border border-border bg-card p-5 shadow-sm transition hover:border-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <h2 class="font-semibold text-foreground">Odkrywaj</h2>
+          <p class="mt-2 text-sm text-muted">Szukaj inspiracji i kont.</p>
+        </a>
+        <a
+          routerLink="/profile"
+          class="rounded-xl border border-border bg-card p-5 shadow-sm transition hover:border-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <h2 class="font-semibold text-foreground">Profil</h2>
+          <p class="mt-2 text-sm text-muted">Twoje zdjęcia i dane.</p>
+        </a>
+      </div>
+
+      <div class="mt-10 flex flex-wrap items-center justify-center gap-3">
+        <button type="button" class="btn-secondary" (click)="logout()">
+          Wyloguj się
+        </button>
+        <a
+          routerLink="/"
+          class="text-sm text-muted underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+        >
+          Marketingowa strona główna
+        </a>
+      </div>
+    </div>
+  }
+</main>

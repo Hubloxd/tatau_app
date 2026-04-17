@@ -1,0 +1,135 @@
+<main id="main-content" class="px-4 pb-16 pt-8 sm:px-6" tabindex="-1">
+  <div class="mx-auto max-w-md">
+    <h1 class="text-2xl font-semibold tracking-tight text-foreground">
+      Utwórz konto
+    </h1>
+    <p class="mt-2 text-sm text-muted">
+      Wypełnij pola poniżej. Masz już konto?
+      <a routerLink="/login" class="link-accent">
+        Zaloguj się
+      </a>
+    </p>
+
+    <form
+      class="mt-8 space-y-5"
+      [formGroup]="form"
+      (ngSubmit)="submit()"
+      novalidate
+    >
+      @if (serverError) {
+        <div
+          class="rounded-lg border border-destructive/40 bg-card px-3 py-2 text-sm text-destructive"
+          role="alert"
+        >
+          {{ serverError }}
+        </div>
+      }
+
+      <div>
+        <label class="field-label" for="reg-username">Nazwa użytkownika</label>
+        <input
+          id="reg-username"
+          class="input-field"
+          type="text"
+          formControlName="username"
+          autocomplete="username"
+          [attr.aria-invalid]="
+            form.controls.username.invalid && form.controls.username.touched
+          "
+          [attr.aria-describedby]="
+            form.controls.username.invalid && form.controls.username.touched
+              ? 'reg-username-err'
+              : null
+          "
+        />
+        @if (
+          form.controls.username.touched && form.controls.username.errors?.['required']
+        ) {
+          <p id="reg-username-err" class="field-error">Podaj nazwę użytkownika.</p>
+        }
+        @if (
+          form.controls.username.touched && form.controls.username.errors?.['minlength']
+        ) {
+          <p id="reg-username-err" class="field-error">Minimum 2 znaki.</p>
+        }
+      </div>
+
+      <div>
+        <label class="field-label" for="reg-email">E-mail</label>
+        <input
+          id="reg-email"
+          class="input-field"
+          type="email"
+          formControlName="email"
+          autocomplete="email"
+          [attr.aria-invalid]="
+            form.controls.email.invalid && form.controls.email.touched
+          "
+        />
+        @if (form.controls.email.touched && form.controls.email.errors?.['required']) {
+          <p class="field-error">Podaj adres e-mail.</p>
+        }
+        @if (form.controls.email.touched && form.controls.email.errors?.['email']) {
+          <p class="field-error">Nieprawidłowy format e-maila.</p>
+        }
+      </div>
+
+      <div>
+        <label class="field-label" for="reg-password">Hasło</label>
+        <input
+          id="reg-password"
+          class="input-field"
+          type="password"
+          formControlName="password"
+          autocomplete="new-password"
+          [attr.aria-invalid]="
+            form.controls.password.invalid && form.controls.password.touched
+          "
+        />
+        @if (
+          form.controls.password.touched && form.controls.password.errors?.['required']
+        ) {
+          <p class="field-error">Podaj hasło.</p>
+        }
+        @if (
+          form.controls.password.touched && form.controls.password.errors?.['minlength']
+        ) {
+          <p class="field-error">Hasło musi mieć co najmniej 8 znaków.</p>
+        }
+      </div>
+
+      <div>
+        <label class="field-label" for="reg-type">Typ konta</label>
+        <select
+          id="reg-type"
+          class="input-field"
+          formControlName="userType"
+        >
+          <option value="artist">Artysta tatuażu</option>
+          <option value="client">Klient</option>
+          <option value="studio">Studio tatuażu</option>
+        </select>
+        <p class="mt-1.5 text-xs text-muted">
+          Wybierz rolę, która najlepiej opisuje Ciebie — pomoże nam dopasować funkcje
+          w przyszłości.
+        </p>
+      </div>
+
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <button
+          type="submit"
+          class="btn-primary min-w-[160px]"
+          [disabled]="submitting"
+          [attr.aria-busy]="submitting"
+        >
+          @if (submitting) {
+            Rejestrowanie…
+          } @else {
+            Zarejestruj się
+          }
+        </button>
+        <a routerLink="/" class="btn-secondary text-center text-sm"> Anuluj </a>
+      </div>
+    </form>
+  </div>
+</main>

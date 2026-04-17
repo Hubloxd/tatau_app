@@ -1,14 +1,13 @@
 import logging
-from google_cloud.client import upload_cs_file, download_cs_file, delete_cs_file, BUCKET_NAME
+from services.storage_backend import delete_stored_file, store_uploaded_file
 from services.image_service import add_image, delete_image, get_image, get_user_images, get_feed_images
 from services.recommendation_service import get_recommendations
 from database import get_db_session
-from fastapi import FastAPI, File, UploadFile
+from fastapi import File, UploadFile
 from fastapi.responses import JSONResponse
-from fastapi import APIRouter, File, UploadFile, Depends
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 import os
-from google.cloud import storage
 import shutil
 import uuid
 
@@ -24,9 +23,7 @@ async def upload_file(file: UploadFile = File(...), user_id: int = 1, descriptio
         with open(temp_filename, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
 
-        # Upload to GCS
-        gcs_filename = f"uploads/{uuid.uuid4().hex}_{file.filename}" 
-        public_url = upload_cs_file(BUCKET_NAME, temp_filename, gcs_filename)
+        public_url = store_uploaded_file(temp_filename, file.filename or "upload")
 
         os.remove(temp_filename)
      
@@ -43,12 +40,10 @@ async def delete_file(image_id: int, db: Session = Depends(get_db_session)):
     image = get_image(db, image_id)
     if not image:
         return JSONResponse(status_code=404, content={"error": "Image not found"})
-    else:   
+    else:
         try:
-        # Delete from GCS
-        # delete_cs_file(BUCKET_NAME, image.image_url.split("/")[-1])
-        # Delete from DB
-            delete_image(db, image_id)       
+            delete_stored_file(image.image_url)
+            delete_image(db, image_id)
             return JSONResponse(content={"status": "success", "message": "Image deleted successfully"})
         except Exception as e:
             return JSONResponse(status_code=500, content={"error": str(e)})

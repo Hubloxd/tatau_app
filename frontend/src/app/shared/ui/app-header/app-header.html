@@ -1,0 +1,70 @@
+<header
+  class="border-b border-border bg-card/80 backdrop-blur-sm"
+  role="banner"
+>
+  <div
+    class="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3 sm:px-6"
+  >
+    <a
+      routerLink="/"
+      class="text-lg font-semibold tracking-tight text-accent rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+    >
+      Tatau
+    </a>
+    <nav aria-label="Główna nawigacja" class="flex flex-wrap items-center gap-2 sm:gap-3">
+      @if (auth.isLoggedIn()) {
+        <a
+          routerLink="/home"
+          class="hidden rounded-md px-1 text-sm font-medium text-accent hover:opacity-90 sm:inline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          Pulpit
+        </a>
+        <a
+          routerLink="/feed"
+          class="hidden rounded-md px-1 text-sm text-muted hover:text-foreground sm:inline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          Dla Ciebie
+        </a>
+        <a
+          routerLink="/explore"
+          class="hidden rounded-md px-1 text-sm text-muted hover:text-foreground sm:inline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          Odkrywaj
+        </a>
+        <a
+          routerLink="/profile"
+          class="hidden rounded-md px-1 text-sm text-muted hover:text-foreground sm:inline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          Profil
+        </a>
+        <span class="max-w-[10rem] truncate text-sm text-muted" [title]="auth.user()?.username">
+          {{ auth.user()?.username }}
+        </span>
+        <button type="button" class="btn-secondary text-sm" (click)="logout()">
+          Wyloguj
+        </button>
+      } @else {
+        <a
+          routerLink="/feed"
+          class="hidden rounded-md px-1 text-sm text-muted hover:text-foreground sm:inline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          Dla Ciebie
+        </a>
+        <a
+          routerLink="/explore"
+          class="hidden rounded-md px-1 text-sm text-muted hover:text-foreground sm:inline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          Odkrywaj
+        </a>
+        <a
+          routerLink="/profile"
+          class="hidden rounded-md px-1 text-sm text-muted hover:text-foreground sm:inline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          Profil
+        </a>
+        <a routerLink="/login" class="btn-secondary text-sm"> Zaloguj się </a>
+        <a routerLink="/register" class="btn-primary text-sm"> Utwórz konto </a>
+      }
+    </nav>
+  </div>
+</header>

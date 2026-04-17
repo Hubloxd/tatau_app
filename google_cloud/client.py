@@ -1,16 +1,17 @@
-from fastapi import FastAPI, File, UploadFile
-from fastapi.responses import JSONResponse
 import os
 from google.cloud import storage
-import shutil
-import uuid
-import pathlib
 
-# set key credentials file path
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/Users/matela/zpo/tatau_app/google.json"
-BUCKET_NAME = 'tatau_app'
+BUCKET_NAME = os.getenv("GCS_BUCKET_NAME", "tatau_app")
 
-def upload_cs_file(bucket_name, source_file_name, destination_file_name): 
+
+def _ensure_gcs_credentials():
+    creds = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+    if creds:
+        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = creds
+
+
+def upload_cs_file(bucket_name, source_file_name, destination_file_name):
+    _ensure_gcs_credentials()
     storage_client = storage.Client()
 
     bucket = storage_client.bucket(bucket_name)
@@ -21,7 +22,8 @@ def upload_cs_file(bucket_name, source_file_name, destination_file_name):
     blob.make_public()
     return blob.public_url
 
-def download_cs_file(bucket_name, file_name, destination_file_name): 
+def download_cs_file(bucket_name, file_name, destination_file_name):
+    _ensure_gcs_credentials()
     storage_client = storage.Client()
 
     bucket = storage_client.bucket(bucket_name)
@@ -31,7 +33,8 @@ def download_cs_file(bucket_name, file_name, destination_file_name):
 
     return True
 
-def delete_cs_file(bucket_name, file_name): 
+def delete_cs_file(bucket_name, file_name):
+    _ensure_gcs_credentials()
     storage_client = storage.Client()
 
     bucket = storage_client.bucket(bucket_name)

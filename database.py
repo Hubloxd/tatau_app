@@ -11,12 +11,25 @@ from models import Base  # ensure all models are registered, incl. comments
 load_dotenv()
 configure_mappers()
 
-tmpPostgres = urlparse(os.getenv("DATABASE_URL"))
 
-engine = create_engine(
-    f"postgresql+psycopg2://{tmpPostgres.username}:{tmpPostgres.password}@{tmpPostgres.hostname}{tmpPostgres.path}?sslmode=require",
-    echo=True
-)
+def build_sqlalchemy_url() -> str:
+    raw = os.getenv("DATABASE_URL")
+    if not raw:
+        raise RuntimeError("DATABASE_URL is not set")
+    u = urlparse(raw)
+    sslmode = os.getenv("POSTGRES_SSLMODE", "require")
+    host = u.hostname or ""
+    if u.port:
+        host = f"{host}:{u.port}"
+    if u.username is not None:
+        auth = f"{u.username}:{u.password}@" if u.password is not None else f"{u.username}@"
+    else:
+        auth = ""
+    path = u.path or ""
+    return f"postgresql+psycopg2://{auth}{host}{path}?sslmode={sslmode}"
+
+
+engine = create_engine(build_sqlalchemy_url(), echo=True)
 
 # Ensure tables exist (no-op if already present)
 Base.metadata.create_all(engine)

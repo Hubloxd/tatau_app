@@ -1,0 +1,92 @@
+<main id="main-content" class="px-4 pb-16 pt-8 sm:px-6" tabindex="-1">
+  <div class="mx-auto max-w-md">
+    <h1 class="text-2xl font-semibold tracking-tight text-foreground">
+      Zaloguj się
+    </h1>
+    <p class="mt-2 text-sm text-muted">
+      Nie masz konta?
+      <a routerLink="/register" class="link-accent">Utwórz konto</a>
+    </p>
+
+    @if (registeredHint) {
+      <div
+        class="mt-4 rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground shadow-sm"
+        role="status"
+      >
+        Rejestracja zakończona pomyślnie. Możesz się teraz zalogować.
+      </div>
+    }
+
+    <form
+      class="mt-8 space-y-5"
+      [formGroup]="form"
+      (ngSubmit)="submit()"
+      novalidate
+    >
+      @if (serverError) {
+        <div
+          class="rounded-lg border border-destructive/40 bg-card px-3 py-2 text-sm text-destructive"
+          role="alert"
+        >
+          {{ serverError }}
+        </div>
+      }
+
+      <div>
+        <label class="field-label" for="login-id">Nazwa użytkownika lub e-mail</label>
+        <input
+          id="login-id"
+          class="input-field"
+          type="text"
+          formControlName="usernameOrEmail"
+          autocomplete="username"
+          [attr.aria-invalid]="
+            form.controls.usernameOrEmail.invalid &&
+            form.controls.usernameOrEmail.touched
+          "
+        />
+        @if (
+          form.controls.usernameOrEmail.touched &&
+          form.controls.usernameOrEmail.errors?.['required']
+        ) {
+          <p class="field-error">To pole jest wymagane.</p>
+        }
+      </div>
+
+      <div>
+        <label class="field-label" for="login-password">Hasło</label>
+        <input
+          id="login-password"
+          class="input-field"
+          type="password"
+          formControlName="password"
+          autocomplete="current-password"
+          [attr.aria-invalid]="
+            form.controls.password.invalid && form.controls.password.touched
+          "
+        />
+        @if (
+          form.controls.password.touched && form.controls.password.errors?.['required']
+        ) {
+          <p class="field-error">Podaj hasło.</p>
+        }
+      </div>
+
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <button
+          type="submit"
+          class="btn-primary min-w-[160px]"
+          [disabled]="submitting"
+          [attr.aria-busy]="submitting"
+        >
+          @if (submitting) {
+            Logowanie…
+          } @else {
+            Zaloguj się
+          }
+        </button>
+        <a routerLink="/" class="btn-secondary text-center text-sm">Strona główna</a>
+      </div>
+    </form>
+  </div>
+</main>
