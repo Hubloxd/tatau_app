@@ -29,8 +29,8 @@ services:
       db:
         condition: service_healthy
     environment:
+      LOCAL_ONLY: "false"
       DATABASE_URL: postgresql://tatau:tatau@db:5432/tatau
-      POSTGRES_SSLMODE: disable
       STORAGE_MODE: local
       PUBLIC_BASE_URL: http://localhost:8000
       LOCAL_UPLOAD_DIR: /app/uploads

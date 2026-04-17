@@ -8,6 +8,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AuthApiService } from '../../core/services/auth-api.service';
 import { AuthService } from '../../core/services/auth.service';
+import { ToastService } from '../../core/services/toast.service';
 
 @Component({
   selector: 'app-login',
@@ -21,6 +22,7 @@ export class LoginComponent {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  private readonly toast = inject(ToastService);
 
   protected readonly form = this.fb.group({
     usernameOrEmail: this.fb.control('', {
@@ -32,12 +34,10 @@ export class LoginComponent {
   });
 
   protected submitting = false;
-  protected serverError: string | null = null;
   protected readonly registeredHint =
     this.route.snapshot.queryParamMap.get('registered') === '1';
 
   protected submit(): void {
-    this.serverError = null;
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
@@ -62,8 +62,9 @@ export class LoginComponent {
             void this.router.navigateByUrl(target);
             return;
           }
-          this.serverError =
-            res.message ?? 'Logowanie nie powiodło się. Spróbuj ponownie.';
+          this.toast.showError(
+            res.message ?? 'Logowanie nie powiodło się. Spróbuj ponownie.',
+          );
         },
         error: (err: HttpErrorResponse) => {
           this.submitting = false;
@@ -74,9 +75,11 @@ export class LoginComponent {
               msg = body.message;
             } else if ('error' in body && typeof body.error === 'string') {
               msg = body.error;
+            } else if ('detail' in body && typeof body.detail === 'string') {
+              msg = body.detail;
             }
           }
-          this.serverError = msg;
+          this.toast.showError(msg);
         },
       });
   }

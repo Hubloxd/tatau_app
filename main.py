@@ -1,3 +1,5 @@
+import env_bootstrap  # noqa: F401 — musi być przed innymi importami aplikacji
+
 import os
 from pathlib import Path
 

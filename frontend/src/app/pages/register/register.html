@@ -16,15 +16,6 @@
       (ngSubmit)="submit()"
       novalidate
     >
-      @if (serverError) {
-        <div
-          class="rounded-lg border border-destructive/40 bg-card px-3 py-2 text-sm text-destructive"
-          role="alert"
-        >
-          {{ serverError }}
-        </div>
-      }
-
       <div>
         <label class="field-label" for="reg-username">Nazwa użytkownika</label>
         <input

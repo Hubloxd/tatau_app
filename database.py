@@ -1,15 +1,14 @@
 import logging
 import os
 from contextlib import contextmanager
-from urllib.parse import urlparse
+from urllib.parse import parse_qsl, urlencode, urlparse
 
-from dotenv import load_dotenv
+import env_bootstrap  # noqa: F401 — .env / google_cloud.json wg LOCAL_ONLY
 from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.orm import Session, configure_mappers, sessionmaker
 
 from models import Base  # ensure all models are registered, incl. comments
 
-load_dotenv()
 configure_mappers()
 
 logger = logging.getLogger(__name__)
@@ -20,7 +19,6 @@ def build_sqlalchemy_url() -> str:
     if not raw:
         raise RuntimeError("DATABASE_URL is not set")
     u = urlparse(raw)
-    sslmode = os.getenv("POSTGRES_SSLMODE", "require")
     host = u.hostname or ""
     if u.port:
         host = f"{host}:{u.port}"
@@ -29,7 +27,15 @@ def build_sqlalchemy_url() -> str:
     else:
         auth = ""
     path = u.path or ""
-    return f"postgresql+psycopg2://{auth}{host}{path}?sslmode={sslmode}"
+    # Zachowaj parametry z URL (Neon: sslmode, channel_binding); nie nadpisuj całości jednym sslmode.
+    params = dict(parse_qsl(u.query, keep_blank_values=True))
+    if "POSTGRES_SSLMODE" in os.environ:
+        params["sslmode"] = os.environ["POSTGRES_SSLMODE"]
+    elif "sslmode" not in params:
+        params["sslmode"] = "require"
+    query = urlencode(params)
+    qs = f"?{query}" if query else ""
+    return f"postgresql+psycopg2://{auth}{host}{path}{qs}"
 
 
 engine = create_engine(build_sqlalchemy_url(), echo=True)

@@ -6,9 +6,7 @@ import shutil
 import uuid
 from pathlib import Path
 
-from dotenv import load_dotenv
-
-load_dotenv()
+import env_bootstrap  # noqa: F401 — .env / google_cloud.json wg LOCAL_ONLY
 
 STORAGE_MODE = os.getenv("STORAGE_MODE", "local").lower().strip()
 LOCAL_UPLOAD_DIR = Path(os.getenv("LOCAL_UPLOAD_DIR", "uploads")).resolve()

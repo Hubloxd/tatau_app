@@ -7,6 +7,7 @@ import {
 import { HttpErrorResponse } from '@angular/common/http';
 import { Router, RouterLink } from '@angular/router';
 import { AuthApiService } from '../../core/services/auth-api.service';
+import { ToastService } from '../../core/services/toast.service';
 
 @Component({
   selector: 'app-register',
@@ -18,6 +19,7 @@ export class RegisterComponent {
   private readonly fb = inject(NonNullableFormBuilder);
   private readonly authApi = inject(AuthApiService);
   private readonly router = inject(Router);
+  private readonly toast = inject(ToastService);
 
   protected readonly form = this.fb.group({
     username: this.fb.control('', {
@@ -35,10 +37,8 @@ export class RegisterComponent {
   });
 
   protected submitting = false;
-  protected serverError: string | null = null;
 
   protected submit(): void {
-    this.serverError = null;
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
@@ -60,21 +60,26 @@ export class RegisterComponent {
               queryParams: { registered: '1' },
             });
           } else {
-            this.serverError =
-              res.error ?? 'Rejestracja nie powiodła się. Spróbuj ponownie.';
+            this.toast.showError(
+              res.error ?? 'Rejestracja nie powiodła się. Spróbuj ponownie.',
+            );
           }
         },
         error: (err: HttpErrorResponse) => {
           this.submitting = false;
           const body = err.error;
           let msg = 'Serwer nie odpowiada. Sprawdź połączenie i spróbuj ponownie.';
-          if (body && typeof body === 'object' && 'error' in body) {
-            const e = (body as { error?: string }).error;
-            if (typeof e === 'string') {
-              msg = e;
+          if (body && typeof body === 'object') {
+            const o = body as { error?: string; detail?: string; message?: string };
+            if (typeof o.error === 'string') {
+              msg = o.error;
+            } else if (typeof o.detail === 'string') {
+              msg = o.detail;
+            } else if (typeof o.message === 'string') {
+              msg = o.message;
             }
           }
-          this.serverError = msg;
+          this.toast.showError(msg);
         },
       });
   }
