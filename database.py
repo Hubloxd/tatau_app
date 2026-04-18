@@ -32,7 +32,9 @@ def build_sqlalchemy_url() -> str:
     if "POSTGRES_SSLMODE" in os.environ:
         params["sslmode"] = os.environ["POSTGRES_SSLMODE"]
     elif "sslmode" not in params:
-        params["sslmode"] = "require"
+        # Jak domyślne libpq: prefer — lokalny Postgres bez SSL działa; w URL możesz
+        # ustawić sslmode=require (np. Neon) i wtedy zostanie zachowane powyżej.
+        params["sslmode"] = "prefer"
     query = urlencode(params)
     qs = f"?{query}" if query else ""
     return f"postgresql+psycopg2://{auth}{host}{path}{qs}"
