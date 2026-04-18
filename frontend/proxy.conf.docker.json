@@ -1,0 +1,7 @@
+{
+  "/user": { "target": "http://backend:8000", "secure": false },
+  "/image": { "target": "http://backend:8000", "secure": false },
+  "/interaction": { "target": "http://backend:8000", "secure": false },
+  "/comment": { "target": "http://backend:8000", "secure": false },
+  "/static": { "target": "http://backend:8000", "secure": false }
+}
