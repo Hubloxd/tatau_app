@@ -80,7 +80,7 @@
                 </a>
               </h1>
               @if (image.user_type) {
-                <p class="text-sm capitalize text-muted">{{ image.user_type }}</p>
+                <p class="text-sm text-muted">{{ image.user_type | userTypeLabel }}</p>
               }
             </div>
           </div>

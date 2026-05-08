@@ -58,7 +58,7 @@
                     (click)="selectUser(u)"
                   >
                     <span class="font-medium">{{ u.username }}</span>
-                    <span class="text-xs capitalize text-muted">{{ u.user_type }}</span>
+                    <span class="text-xs text-muted">{{ u.user_type | userTypeLabel }}</span>
                   </button>
                 </li>
               }

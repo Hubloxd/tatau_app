@@ -24,11 +24,12 @@ import {
   type UserSearchHit,
 } from '../../../core/services/user-search-api.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { UserTypeLabelPipe } from '../../pipes/user-type-label.pipe';
 
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [RouterLink, FormsModule],
+  imports: [RouterLink, FormsModule, UserTypeLabelPipe],
   templateUrl: './app-header.html',
 })
 export class AppHeaderComponent {

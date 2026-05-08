@@ -21,6 +21,7 @@ import {
 } from '../../core/services/feed-api.service';
 import { ImageDetailApiService } from '../../core/services/image-detail-api.service';
 import { isVideoMime } from '../../shared/util/media-type';
+import { UserTypeLabelPipe } from '../../shared/pipes/user-type-label.pipe';
 
 const PAGE_SIZE = 12;
 
@@ -32,6 +33,7 @@ const PAGE_SIZE = 12;
     FormsModule,
     DashboardSidebarComponent,
     PhotoDropzoneComponent,
+    UserTypeLabelPipe,
   ],
   templateUrl: './home.html',
 })

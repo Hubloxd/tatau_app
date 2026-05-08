@@ -91,7 +91,7 @@ async def get_feed(
     Kronologiczny feed (data dodania zdjęcia, najnowsze najpierw).
     """
     try:
-        images = get_feed_images(db, limit, offset, None)
+        images = get_feed_images(db, limit, offset, None, viewer_user_id=user_id)
         image_list = [
             {
                 "id": image.id,

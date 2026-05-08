@@ -17,11 +17,12 @@ import {
   type ImageDetail,
 } from '../../core/services/image-detail-api.service';
 import { isVideoMime } from '../../shared/util/media-type';
+import { UserTypeLabelPipe } from '../../shared/pipes/user-type-label.pipe';
 
 @Component({
   selector: 'app-image-detail',
   standalone: true,
-  imports: [RouterLink, FormsModule, DatePipe],
+  imports: [RouterLink, FormsModule, DatePipe, UserTypeLabelPipe],
   templateUrl: './image-detail.html',
 })
 export class ImageDetailComponent implements OnInit {

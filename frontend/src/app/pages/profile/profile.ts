@@ -16,11 +16,12 @@ import {
 } from '../../core/services/profile-api.service';
 import { SettingsApiService } from '../../core/services/settings-api.service';
 import { isVideoMime } from '../../shared/util/media-type';
+import { UserTypeLabelPipe } from '../../shared/pipes/user-type-label.pipe';
 
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, UserTypeLabelPipe],
   templateUrl: './profile.html',
 })
 export class ProfileComponent implements OnInit, OnDestroy {

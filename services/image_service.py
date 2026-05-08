@@ -1,4 +1,5 @@
 from models.image import Image
+from models.user import User
 from models.tag import Tag
 from models.interaction import Interaction
 from models.comment import Comment
@@ -104,9 +105,25 @@ def get_user_saved_images(session, user_id):
         .all()
     )
 
-def get_feed_images(session, limit=20, offset=0, search_term=None):
-    query = session.query(Image)
-    
+def get_feed_images(
+    session,
+    limit=20,
+    offset=0,
+    search_term=None,
+    viewer_user_id: int | None = None,
+):
+    query = session.query(Image).join(User, User.id == Image.user_id)
+
+    if viewer_user_id is not None:
+        query = query.filter(
+            or_(
+                User.profile_public.is_(True),
+                Image.user_id == viewer_user_id,
+            )
+        )
+    else:
+        query = query.filter(User.profile_public.is_(True))
+
     if search_term:
         search_term = search_term.strip().lower()        
         tag_images = session.query(Image.id)\

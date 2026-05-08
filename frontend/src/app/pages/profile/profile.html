@@ -61,7 +61,9 @@
           </ul>
 
           <div class="space-y-1">
-            <p class="text-sm font-semibold capitalize leading-snug text-foreground">{{ p.user_type }}</p>
+            <p class="text-sm font-semibold leading-snug text-foreground">
+              {{ p.user_type | userTypeLabel }}
+            </p>
             @if (p.profile_limited && !isOwnProfile) {
               <p class="max-w-md text-sm text-muted">
                 To konto ma ustawiony prywatny profil — opis i galeria nie są widoczne dla osób

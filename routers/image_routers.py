@@ -204,7 +204,7 @@ async def get_feed(
     db: Session = Depends(get_db_session)
 ):
     """Get images for the feed (data dodania — najnowsze na górze), opcjonalnie wyszukiwanie."""
-    images = get_feed_images(db, limit, offset, search_term)
+    images = get_feed_images(db, limit, offset, search_term, viewer_user_id=user_id)
 
     image_ids = [img.id for img in images]
     comment_map, like_map, liked_ids = get_feed_counts_for_images(
