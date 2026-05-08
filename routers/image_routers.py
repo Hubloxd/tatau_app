@@ -10,7 +10,6 @@ from services.image_service import (
     get_feed_counts_for_images,
 )
 from services.user_service import get_user
-from services.recommendation_service import get_recommendations
 from database import get_db_session
 from fastapi import File, UploadFile
 from fastapi.responses import JSONResponse
@@ -22,11 +21,44 @@ import uuid
 
 logger = logging.getLogger(__name__)
 
+_ALLOWED_IMAGE_MIME = frozenset({
+    "image/jpeg",
+    "image/jpg",
+    "image/png",
+    "image/webp",
+    "image/gif",
+})
+
+_ALLOWED_VIDEO_MIME = frozenset({
+    "video/mp4",
+    "video/webm",
+    "video/quicktime",
+    "video/ogg",
+})
+
+_ALLOWED_UPLOAD_MIME = _ALLOWED_IMAGE_MIME | _ALLOWED_VIDEO_MIME
+
+
+def _normalized_mime(content_type: str | None) -> str | None:
+    if not content_type:
+        return None
+    return content_type.split(";", 1)[0].strip().lower()
+
+
 router = APIRouter(prefix="/image", tags=["image"])
 
 @router.post("/upload")
 async def upload_file(file: UploadFile = File(...), user_id: int = 1, description: str = None, db: Session = Depends(get_db_session)):
     try:
+        mime = _normalized_mime(file.content_type)
+        if mime not in _ALLOWED_UPLOAD_MIME:
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "error": "Nieobsługiwany typ pliku. Dozwolone: JPEG, PNG, WebP, GIF, MP4, WebM, MOV, Ogg Video.",
+                },
+            )
+
         temp_filename = f"temp_{uuid.uuid4().hex}_{file.filename}"
 
         with open(temp_filename, "wb") as buffer:
@@ -36,12 +68,12 @@ async def upload_file(file: UploadFile = File(...), user_id: int = 1, descriptio
 
         os.remove(temp_filename)
      
-        add_image(db, user_id, public_url, description)
+        add_image(db, user_id, public_url, description, mime_type=mime)
         
         return JSONResponse(content={"status": "success", "public_url": public_url})
 
     except Exception as e:
-        logger.exception("Feed endpoint failed")
+        logger.exception("upload_file failed")
         return JSONResponse(status_code=500, content={"error": str(e)})
     
 @router.delete("/delete/{image_id}")
@@ -102,6 +134,7 @@ async def get_images(
                 "id": image.id,
                 "url": image.image_url,
                 "description": image.description,
+                "mime_type": getattr(image, "mime_type", None),
             }
             for image in images
         ]
@@ -125,6 +158,7 @@ async def get_saved_images(user_id: int, db: Session = Depends(get_db_session)):
                 "user_id": image.user_id,
                 "username": getattr(image.owner, "username", f"User {image.user_id}"),
                 "user_type": getattr(image.owner, "user_type", "artist"),
+                "mime_type": getattr(image, "mime_type", None),
             }
             for image in images
         ]
@@ -153,6 +187,7 @@ async def get_single_image(image_id: int, db: Session = Depends(get_db_session))
             "username": getattr(owner, "username", None) if owner else None,
             "user_type": getattr(owner, "user_type", None) if owner else None,
             "avatar_url": getattr(owner, "avatar_url", None) if owner else None,
+            "mime_type": getattr(image, "mime_type", None),
         }
 
         return JSONResponse(content={"status": "success", "image": image_data})
@@ -168,12 +203,8 @@ async def get_feed(
     search_term: str | None = None,
     db: Session = Depends(get_db_session)
 ):
-    """Get images for the feed with optional search, pagination, and personalization."""
-    # try:
-    if search_term:
-        images = get_feed_images(db, limit, offset, search_term)
-    else:
-        images = get_recommendations(db, user_id, limit, offset)
+    """Get images for the feed (data dodania — najnowsze na górze), opcjonalnie wyszukiwanie."""
+    images = get_feed_images(db, limit, offset, search_term, viewer_user_id=user_id)
 
     image_ids = [img.id for img in images]
     comment_map, like_map, liked_ids = get_feed_counts_for_images(
@@ -192,6 +223,7 @@ async def get_feed(
             "likes_count": like_map.get(image.id, 0),
             "comments_count": comment_map.get(image.id, 0),
             "user_liked": image.id in liked_ids if user_id else False,
+            "mime_type": getattr(image, "mime_type", None),
         }
         for image in images
     ]
@@ -201,6 +233,3 @@ async def get_feed(
         "images": image_list,
         "count": len(image_list)
     })
-
-    # except Exception as e:
-    #     return JSONResponse(status_code=500, content={"error": str(e)})

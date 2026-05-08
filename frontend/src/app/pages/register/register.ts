@@ -9,6 +9,10 @@ import { Router, RouterLink } from '@angular/router';
 import { AuthApiService } from '../../core/services/auth-api.service';
 import { ToastService } from '../../core/services/toast.service';
 
+/** Spójne z backendem (services/user_service.py). */
+const SAFE_USERNAME_REGEX = /^[a-zA-Z0-9._-]+$/;
+const SAFE_EMAIL_REGEX = /^[a-zA-Z0-9._+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
 @Component({
   selector: 'app-register',
   standalone: true,
@@ -23,10 +27,15 @@ export class RegisterComponent {
 
   protected readonly form = this.fb.group({
     username: this.fb.control('', {
-      validators: [Validators.required, Validators.minLength(2)],
+      validators: [
+        Validators.required,
+        Validators.minLength(2),
+        Validators.maxLength(32),
+        Validators.pattern(SAFE_USERNAME_REGEX),
+      ],
     }),
     email: this.fb.control('', {
-      validators: [Validators.required, Validators.email],
+      validators: [Validators.required, Validators.pattern(SAFE_EMAIL_REGEX)],
     }),
     password: this.fb.control('', {
       validators: [Validators.required, Validators.minLength(8)],

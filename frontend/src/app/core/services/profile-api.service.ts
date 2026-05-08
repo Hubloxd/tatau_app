@@ -6,6 +6,7 @@ export interface UserGalleryImage {
   id: number;
   url: string;
   description: string | null;
+  mime_type?: string | null;
 }
 
 export interface UserImagesResponse {

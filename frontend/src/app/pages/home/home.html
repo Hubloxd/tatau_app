@@ -127,7 +127,7 @@
                       >
                         {{ item.username }}
                       </a>
-                      <p class="text-xs text-muted capitalize">{{ item.user_type }}</p>
+                      <p class="text-xs text-muted">{{ item.user_type | userTypeLabel }}</p>
                     </div>
                   </div>
 
@@ -136,13 +136,23 @@
                       [routerLink]="['/image', item.id]"
                       class="relative z-0 block h-full w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
                     >
-                      <img
-                        [src]="item.url"
-                        [alt]="item.description || 'Zdjęcie od ' + item.username"
-                        class="h-full w-full object-cover"
-                        loading="lazy"
-                        decoding="async"
-                      />
+                      @if (isVideoMime(item.mime_type)) {
+                        <video
+                          [src]="item.url"
+                          controls
+                          playsinline
+                          class="h-full w-full object-cover"
+                          [attr.aria-label]="item.description || 'Wideo od ' + item.username"
+                        ></video>
+                      } @else {
+                        <img
+                          [src]="item.url"
+                          [alt]="item.description || 'Zdjęcie od ' + item.username"
+                          class="h-full w-full object-cover"
+                          loading="lazy"
+                          decoding="async"
+                        />
+                      }
                     </a>
                     <!-- Overlay: mobile zawsze; od md przy hover -->
                     <div
@@ -186,9 +196,9 @@
                           <button
                             type="button"
                             class="pointer-events-auto rounded-md p-1.5 text-white transition hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white disabled:cursor-default disabled:opacity-60"
-                            [disabled]="item.user_liked || isLikeBusy(item.id)"
+                            [disabled]="isLikeBusy(item.id)"
                             [attr.aria-label]="
-                              item.user_liked ? 'Już polubione' : 'Polub zdjęcie'
+                              item.user_liked ? 'Cofnij polubienie' : 'Polub'
                             "
                             [attr.aria-pressed]="item.user_liked"
                             (click)="quickLike($event, item)"

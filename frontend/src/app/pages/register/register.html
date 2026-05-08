@@ -37,11 +37,20 @@
           form.controls.username.touched && form.controls.username.errors?.['required']
         ) {
           <p id="reg-username-err" class="field-error">Podaj nazwę użytkownika.</p>
-        }
-        @if (
+        } @else if (
           form.controls.username.touched && form.controls.username.errors?.['minlength']
         ) {
           <p id="reg-username-err" class="field-error">Minimum 2 znaki.</p>
+        } @else if (
+          form.controls.username.touched && form.controls.username.errors?.['maxlength']
+        ) {
+          <p id="reg-username-err" class="field-error">Maksimum 32 znaki.</p>
+        } @else if (
+          form.controls.username.touched && form.controls.username.errors?.['pattern']
+        ) {
+          <p id="reg-username-err" class="field-error">
+            Dozwolone: litery, cyfry oraz znaki . _ -
+          </p>
         }
       </div>
 
@@ -56,12 +65,16 @@
           [attr.aria-invalid]="
             form.controls.email.invalid && form.controls.email.touched
           "
+          [attr.aria-describedby]="
+            form.controls.email.invalid && form.controls.email.touched
+              ? 'reg-email-err'
+              : null
+          "
         />
         @if (form.controls.email.touched && form.controls.email.errors?.['required']) {
-          <p class="field-error">Podaj adres e-mail.</p>
-        }
-        @if (form.controls.email.touched && form.controls.email.errors?.['email']) {
-          <p class="field-error">Nieprawidłowy format e-maila.</p>
+          <p id="reg-email-err" class="field-error">Podaj adres e-mail.</p>
+        } @else if (form.controls.email.touched && form.controls.email.errors?.['pattern']) {
+          <p id="reg-email-err" class="field-error">Nieprawidłowy format e-maila.</p>
         }
       </div>
 

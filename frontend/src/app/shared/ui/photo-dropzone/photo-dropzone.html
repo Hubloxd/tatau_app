@@ -3,7 +3,7 @@
     #fileInput
     type="file"
     class="sr-only"
-    accept="image/*"
+    [attr.accept]="accept"
     tabindex="-1"
     (change)="onFileInputChange($event)"
   />
@@ -37,9 +37,30 @@
       />
     </svg>
     <p class="text-sm font-medium text-foreground">
-      Przeciągnij zdjęcie tutaj albo <span class="text-accent underline-offset-2 hover:underline">kliknij, aby wybrać</span>
+      Przeciągnij zdjęcie lub wideo albo
+      <span class="text-accent underline-offset-2 hover:underline">kliknij, aby wybrać</span>
     </p>
-    <p class="text-xs text-muted">PNG, JPG, WebP i inne formaty obsługiwane przez przeglądarkę</p>
+    <p class="text-xs text-muted">
+      Obrazy (PNG, JPG, WebP…) oraz wideo (MP4, WebM, MOV…), zgodnie z limitem serwera
+    </p>
+    @if (showImagePreview && previewUrl) {
+      <div class="mt-3 w-full">
+        @if (previewIsVideo) {
+          <video
+            [src]="previewUrl"
+            controls
+            playsinline
+            class="mx-auto max-h-56 max-w-full rounded-lg border border-border object-contain shadow-sm"
+          ></video>
+        } @else {
+          <img
+            [src]="previewUrl"
+            alt=""
+            class="mx-auto max-h-56 max-w-full rounded-lg border border-border object-contain shadow-sm"
+          />
+        }
+      </div>
+    }
     @if (fileName) {
       <p class="mt-1 max-w-full truncate text-sm text-accent" [title]="fileName">
         Wybrano: {{ fileName }}

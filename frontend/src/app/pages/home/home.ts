@@ -20,6 +20,8 @@ import {
   type FeedImage,
 } from '../../core/services/feed-api.service';
 import { ImageDetailApiService } from '../../core/services/image-detail-api.service';
+import { isVideoMime } from '../../shared/util/media-type';
+import { UserTypeLabelPipe } from '../../shared/pipes/user-type-label.pipe';
 
 const PAGE_SIZE = 12;
 
@@ -31,11 +33,13 @@ const PAGE_SIZE = 12;
     FormsModule,
     DashboardSidebarComponent,
     PhotoDropzoneComponent,
+    UserTypeLabelPipe,
   ],
   templateUrl: './home.html',
 })
 export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
   protected readonly auth = inject(AuthService);
+  protected readonly isVideoMime = isVideoMime;
   private readonly feedApi = inject(FeedApiService);
   private readonly imageInteractions = inject(ImageDetailApiService);
   private readonly cdr = inject(ChangeDetectorRef);
@@ -235,10 +239,31 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
     event.preventDefault();
     event.stopPropagation();
     const u = this.auth.user();
-    if (!u || item.user_liked || this.likeBusyIds.has(item.id)) {
+    if (!u || this.likeBusyIds.has(item.id)) {
       return;
     }
     this.likeBusyIds.add(item.id);
+    if (item.user_liked) {
+      this.imageInteractions.removeInteraction(item.id, u.id, 'like').subscribe({
+        next: (res) => {
+          queueMicrotask(() => {
+            this.likeBusyIds.delete(item.id);
+            if (res.status === 'success') {
+              item.user_liked = false;
+              item.likes_count = Math.max(0, item.likes_count - 1);
+            }
+            this.cdr.markForCheck();
+          });
+        },
+        error: () => {
+          queueMicrotask(() => {
+            this.likeBusyIds.delete(item.id);
+            this.cdr.markForCheck();
+          });
+        },
+      });
+      return;
+    }
     this.imageInteractions.recordInteraction(item.id, u.id, 'like').subscribe({
       next: (res) => {
         queueMicrotask(() => {

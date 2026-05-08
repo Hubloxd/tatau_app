@@ -26,11 +26,16 @@ def add_interaction(db, user_id: int, image_id: int, interaction_type: str):
 def get_interactions(db, image_id: int):
     return db.query(Interaction).filter_by(image_id=image_id).all()
 
-## tu chyba chujowe podejscie 
-def delete_interaction(db, user_id: int, image_id: int, interaction_type: str):
-    interaction = db.query(Interaction).filter_by(user_id=user_id, image_id=image_id, interaction_type=interaction_type).first()
-    if interaction:
-        db.delete(interaction)
-        db.commit()
-        return True
-    return False
+def delete_interaction(db, user_id: int, image_id: int, interaction_type: str) -> int:
+    """Usuwa wszystkie pasujące rekordy (np. duplikaty). Zwraca liczbę usuniętych wierszy."""
+    deleted = (
+        db.query(Interaction)
+        .filter_by(
+            user_id=user_id,
+            image_id=image_id,
+            interaction_type=interaction_type,
+        )
+        .delete(synchronize_session=False)
+    )
+    db.commit()
+    return deleted

@@ -10,6 +10,8 @@ export interface FeedImage {
   username: string;
   user_type: string;
   avatar_url?: string | null;
+  /** MIME zapisany przy uploadzie; brak lub image/* → wyświetl jako zdjęcie */
+  mime_type?: string | null;
   /** Polubienia (interactions typu like) */
   likes_count: number;
   /** Komentarze z tabeli comments */

@@ -1,11 +1,71 @@
+import logging
+import re
+
 import bcrypt
+from sqlalchemy.exc import IntegrityError
 from models.user import User
 
+logger = logging.getLogger(__name__)
+
+# Dozwolone znaki bezpieczne dla wyświetlania / bez < > % itd.
+_SAFE_EMAIL_RE = re.compile(r"^[a-zA-Z0-9._+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
+# Nick: bez HTML / XSS; litery, cyfry, kropka, podkreślenie, myślnik.
+_SAFE_USERNAME_RE = re.compile(r"^[a-zA-Z0-9._-]{2,32}$")
+
+
+def validate_username_format(username: str) -> str:
+    s = username.strip()
+    if not _SAFE_USERNAME_RE.fullmatch(s):
+        raise ValueError("invalid_username")
+    return s
+
+
+def validate_email_format(email: str) -> str:
+    s = email.strip()
+    if not _SAFE_EMAIL_RE.fullmatch(s):
+        raise ValueError("invalid_email")
+    return s
+
+
+def _unique_violation_target(exc: IntegrityError) -> str | None:
+    """PostgreSQL / inne: które pole naruszyło unikalność ('email', 'username')."""
+    orig = getattr(exc, "orig", None)
+    if orig is not None:
+        diag = getattr(orig, "diag", None)
+        if diag is not None:
+            cname = getattr(diag, "constraint_name", None)
+            if cname:
+                cn = cname.decode() if isinstance(cname, bytes) else str(cname)
+                cl = cn.lower()
+                if "email" in cl:
+                    return "email"
+                if "username" in cl:
+                    return "username"
+    msg = str(exc).lower()
+    if "ix_users_email" in msg or "key (email)=" in msg:
+        return "email"
+    if "ix_users_username" in msg or "key (username)=" in msg:
+        return "username"
+    return None
+
+
 def add_user(session, username, email, password, user_type):
+    username = validate_username_format(username)
+    email = validate_email_format(email)
     hashed_password = set_password(password)
     new_user = User(username=username, email=email, password_hash=hashed_password, user_type=user_type)
     session.add(new_user)
-    session.commit()
+    try:
+        session.commit()
+    except IntegrityError as e:
+        session.rollback()
+        target = _unique_violation_target(e)
+        if target == "email":
+            raise ValueError("email_taken") from None
+        if target == "username":
+            raise ValueError("username_taken") from None
+        logger.warning("IntegrityError przy add_user (nieznany constraint): %s", e)
+        raise ValueError("registration_conflict") from None
     return new_user
 
 def delete_user(session, user_id):
@@ -29,7 +89,7 @@ def update_user(session, user_id, username=None, password=None):
     user = session.query(User).filter_by(id=user_id).first()
     if user:
         if username:
-            user.username = username
+            user.username = validate_username_format(username)
         if password:
             user.password_hash = set_password(password)
         session.commit()
@@ -42,6 +102,7 @@ def update_user_profile(session, user_id: int, email=None, bio=None, profile_pub
     if not user:
         return False
     if email is not None:
+        email = validate_email_format(email)
         existing = get_user_by_email(session, email)
         if existing and existing.id != user_id:
             raise ValueError("email_taken")
@@ -112,6 +173,20 @@ def search_users_by_term(session, search_term):
         (User.username.ilike(f"%{search_term}%")) | 
         (User.email.ilike(f"%{search_term}%"))
     ).all()
+
+
+def search_users_by_username(session, search_term: str, limit: int = 25):
+    """Wyszukiwanie po nazwie użytkownika (fragment, bez rozróżniania wielkości liter)."""
+    term = (search_term or "").strip()
+    if not term:
+        return []
+    return (
+        session.query(User)
+        .filter(User.username.ilike(f"%{term}%"))
+        .order_by(User.username.asc())
+        .limit(limit)
+        .all()
+    )
 
 def add_follow(session, follower_id, followed_id):
     follower = get_user(session, follower_id)

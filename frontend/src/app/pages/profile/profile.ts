@@ -15,15 +15,18 @@ import {
   type UserGalleryImage,
 } from '../../core/services/profile-api.service';
 import { SettingsApiService } from '../../core/services/settings-api.service';
+import { isVideoMime } from '../../shared/util/media-type';
+import { UserTypeLabelPipe } from '../../shared/pipes/user-type-label.pipe';
 
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, UserTypeLabelPipe],
   templateUrl: './profile.html',
 })
 export class ProfileComponent implements OnInit, OnDestroy {
   protected readonly auth = inject(AuthService);
+  protected readonly isVideoMime = isVideoMime;
   private readonly api = inject(ProfileApiService);
   private readonly settingsApi = inject(SettingsApiService);
   private readonly route = inject(ActivatedRoute);

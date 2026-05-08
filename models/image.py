@@ -1,5 +1,6 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
 from models.base import Base
 from models.image_tag import image_tags
 
@@ -10,6 +11,12 @@ class Image(Base):
     user_id = Column(Integer, ForeignKey('users.id'))
     image_url = Column(String)
     description = Column(String)
+    uploaded_at = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+    )
+    mime_type = Column(String, nullable=True)
 
     owner = relationship("User", back_populates="images")
     

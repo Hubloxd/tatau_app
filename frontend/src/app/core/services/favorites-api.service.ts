@@ -9,6 +9,7 @@ export interface SavedImage {
   user_id: number;
   username: string;
   user_type: string;
+  mime_type?: string | null;
 }
 
 export interface SavedImagesResponse {

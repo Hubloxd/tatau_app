@@ -74,6 +74,65 @@ def ensure_user_profile_columns() -> None:
 
 ensure_user_profile_columns()
 
+def ensure_image_uploaded_at_column() -> None:
+    """Dodaje images.uploaded_at i uzupełnia istniejące rekordy (kolejność wg id)."""
+    try:
+        insp = inspect(engine)
+        if "images" not in insp.get_table_names():
+            return
+        cols = {c["name"] for c in insp.get_columns("images")}
+        with engine.begin() as conn:
+            if "uploaded_at" not in cols:
+                conn.execute(
+                    text("ALTER TABLE images ADD COLUMN uploaded_at TIMESTAMPTZ")
+                )
+                logger.info("Migracja: dodano kolumnę images.uploaded_at")
+                conn.execute(
+                    text("""
+                        WITH o AS (
+                            SELECT id, ROW_NUMBER() OVER (ORDER BY id ASC) AS rn
+                            FROM images
+                        )
+                        UPDATE images AS i
+                        SET uploaded_at = TIMESTAMPTZ '2000-01-01 00:00:00+00' + (o.rn * INTERVAL '1 second')
+                        FROM o WHERE i.id = o.id
+                    """)
+                )
+                conn.execute(
+                    text(
+                        "ALTER TABLE images ALTER COLUMN uploaded_at SET DEFAULT CURRENT_TIMESTAMP"
+                    )
+                )
+                conn.execute(
+                    text(
+                        "ALTER TABLE images ALTER COLUMN uploaded_at SET NOT NULL"
+                    )
+                )
+    except Exception as e:
+        logger.warning("Nie udało się zweryfikować migracji images.uploaded_at: %s", e)
+
+
+ensure_image_uploaded_at_column()
+
+
+def ensure_image_mime_type_column() -> None:
+    try:
+        insp = inspect(engine)
+        if "images" not in insp.get_table_names():
+            return
+        cols = {c["name"] for c in insp.get_columns("images")}
+        with engine.begin() as conn:
+            if "mime_type" not in cols:
+                conn.execute(
+                    text("ALTER TABLE images ADD COLUMN mime_type VARCHAR")
+                )
+                logger.info("Migracja: dodano kolumnę images.mime_type")
+    except Exception as e:
+        logger.warning("Nie udało się zweryfikować migracji images.mime_type: %s", e)
+
+
+ensure_image_mime_type_column()
+
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
