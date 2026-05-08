@@ -1,3 +1,4 @@
+import logging
 import os
 import shutil
 import traceback
@@ -24,6 +25,7 @@ from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/user", tags=["user"])
+logger = logging.getLogger(__name__)
 
 
 class LoginRequest(BaseModel):
@@ -85,8 +87,43 @@ async def register_user(username: str, email: str, password: str, user_type: str
     try:
         user = add_user(db, username, email, password, user_type)
         return JSONResponse(content={"status": "success", "user_id": user.id})
-    except Exception as e:
-        return JSONResponse(status_code=500, content={"error": str(e)})
+    except ValueError as e:
+        if str(e) == "invalid_email":
+            return JSONResponse(
+                status_code=400,
+                content={"error": "Nieprawidłowy format adresu e-mail."},
+            )
+        if str(e) == "invalid_username":
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "error": "Nieprawidłowa nazwa użytkownika. Użyj 2–32 znaków: litery, cyfry, . _ -",
+                },
+            )
+        if str(e) == "email_taken":
+            return JSONResponse(
+                status_code=409,
+                content={"error": "Ten adres e-mail jest już zajęty."},
+            )
+        if str(e) == "username_taken":
+            return JSONResponse(
+                status_code=409,
+                content={"error": "Ta nazwa użytkownika jest już zajęta."},
+            )
+        if str(e) == "registration_conflict":
+            return JSONResponse(
+                status_code=409,
+                content={
+                    "error": "Podane dane są już w użyciu. Sprawdź e-mail i nazwę użytkownika.",
+                },
+            )
+        raise
+    except Exception:
+        logger.exception("register_user failed")
+        return JSONResponse(
+            status_code=500,
+            content={"error": "Nie udało się zarejestrować. Spróbuj ponownie później."},
+        )
     
 @router.delete("/delete_user/{user_id}")
 async def delete_user(user_id: int, db: Session = Depends(get_db_session)):
@@ -245,6 +282,11 @@ async def put_user_settings(
             return JSONResponse(
                 status_code=409,
                 content={"status": "error", "message": "Ten adres e-mail jest już zajęty."},
+            )
+        if str(e) == "invalid_email":
+            return JSONResponse(
+                status_code=400,
+                content={"status": "error", "message": "Nieprawidłowy format adresu e-mail."},
             )
         raise
     except Exception as e:

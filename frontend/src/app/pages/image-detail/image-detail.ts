@@ -16,6 +16,7 @@ import {
   type CommentItem,
   type ImageDetail,
 } from '../../core/services/image-detail-api.service';
+import { isVideoMime } from '../../shared/util/media-type';
 
 @Component({
   selector: 'app-image-detail',
@@ -25,6 +26,7 @@ import {
 })
 export class ImageDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
+  protected readonly isVideoMime = isVideoMime;
   private readonly router = inject(Router);
   protected readonly auth = inject(AuthService);
   private readonly api = inject(ImageDetailApiService);
@@ -133,10 +135,31 @@ export class ImageDetailComponent implements OnInit {
 
   protected like(): void {
     const u = this.auth.user();
-    if (!u || this.userLiked || this.likeBusy) {
+    if (!u || this.likeBusy) {
       return;
     }
     this.likeBusy = true;
+    if (this.userLiked) {
+      this.api.removeInteraction(this.imageId, u.id, 'like').subscribe({
+        next: (res) => {
+          queueMicrotask(() => {
+            this.likeBusy = false;
+            if (res.status === 'success') {
+              this.userLiked = false;
+              this.likes = Math.max(0, this.likes - 1);
+            }
+            this.cdr.markForCheck();
+          });
+        },
+        error: () => {
+          queueMicrotask(() => {
+            this.likeBusy = false;
+            this.cdr.markForCheck();
+          });
+        },
+      });
+      return;
+    }
     this.api.recordInteraction(this.imageId, u.id, 'like').subscribe({
       next: (res) => {
         queueMicrotask(() => {
@@ -159,10 +182,31 @@ export class ImageDetailComponent implements OnInit {
 
   protected save(): void {
     const u = this.auth.user();
-    if (!u || this.userSaved || this.saveBusy) {
+    if (!u || this.saveBusy) {
       return;
     }
     this.saveBusy = true;
+    if (this.userSaved) {
+      this.api.removeInteraction(this.imageId, u.id, 'save').subscribe({
+        next: (res) => {
+          queueMicrotask(() => {
+            this.saveBusy = false;
+            if (res.status === 'success') {
+              this.userSaved = false;
+              this.saves = Math.max(0, this.saves - 1);
+            }
+            this.cdr.markForCheck();
+          });
+        },
+        error: () => {
+          queueMicrotask(() => {
+            this.saveBusy = false;
+            this.cdr.markForCheck();
+          });
+        },
+      });
+      return;
+    }
     this.api.recordInteraction(this.imageId, u.id, 'save').subscribe({
       next: (res) => {
         queueMicrotask(() => {

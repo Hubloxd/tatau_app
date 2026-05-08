@@ -1,6 +1,6 @@
-from services.interaction_service import add_interaction, get_interactions
-from services.recommendation_service import get_recommendations
-from fastapi import APIRouter, Depends
+from services.interaction_service import add_interaction, delete_interaction, get_interactions
+from services.image_service import get_feed_images
+from fastapi import APIRouter, Depends, Query
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from database import get_db_session
@@ -20,6 +20,28 @@ async def record_interaction(
     try:
         interaction = add_interaction(db, user_id, image_id, interaction_type)
         return JSONResponse(content={"status": "success"})
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})
+
+@router.delete("/record-interaction")
+async def remove_interaction(
+    image_id: int = Query(...),
+    user_id: int = Query(...),
+    interaction_type: str = Query(...),
+    db: Session = Depends(get_db_session),
+):
+    """Cofnięcie polubienia lub usunięcie zapisu użytkownika."""
+    it = (interaction_type or "").strip().lower()
+    if it not in ("like", "save"):
+        return JSONResponse(
+            status_code=400,
+            content={"status": "error", "message": "Dozwolone typy: like, save."},
+        )
+    try:
+        deleted = delete_interaction(db, user_id, image_id, it)
+        return JSONResponse(
+            content={"status": "success", "removed": deleted > 0},
+        )
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})
 
@@ -66,16 +88,17 @@ async def get_feed(
     db: Session = Depends(get_db_session)
 ):
     """
-    Get personalized feed for a user with recommendations
+    Kronologiczny feed (data dodania zdjęcia, najnowsze najpierw).
     """
     try:
-        images = get_recommendations(db, user_id, limit)
+        images = get_feed_images(db, limit, offset, None)
         image_list = [
             {
                 "id": image.id,
                 "url": image.image_url,
                 "description": image.description,
-                "user_id": image.user_id
+                "user_id": image.user_id,
+                "mime_type": getattr(image, "mime_type", None),
             }
             for image in images
         ]

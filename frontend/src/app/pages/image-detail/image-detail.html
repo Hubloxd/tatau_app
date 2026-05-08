@@ -25,12 +25,22 @@
     >
       <!-- Zdjęcie -->
       <div class="min-w-0 flex-1 lg:max-w-[min(100%,520px)]">
-        <img
-          [src]="image.url"
-          [alt]="image.description || 'Zdjęcie użytkownika ' + (image.username || '')"
-          class="w-full rounded-xl border border-border object-contain shadow-sm"
-          decoding="async"
-        />
+        @if (isVideoMime(image.mime_type)) {
+          <video
+            [src]="image.url"
+            controls
+            playsinline
+            class="w-full rounded-xl border border-border object-contain shadow-sm"
+            [attr.aria-label]="image.description || 'Wideo użytkownika ' + (image.username || '')"
+          ></video>
+        } @else {
+          <img
+            [src]="image.url"
+            [alt]="image.description || 'Zdjęcie użytkownika ' + (image.username || '')"
+            class="w-full rounded-xl border border-border object-contain shadow-sm"
+            decoding="async"
+          />
+        }
       </div>
 
       <!-- Panel boczny: meta, akcje, komentarze -->
@@ -90,28 +100,36 @@
               <button
                 type="button"
                 class="btn-secondary text-sm"
-                [disabled]="userLiked || likeBusy"
+                [disabled]="likeBusy"
                 [attr.aria-pressed]="userLiked"
+                [attr.aria-label]="userLiked ? 'Cofnij polubienie' : 'Polub'"
                 (click)="like()"
               >
-                @if (userLiked) {
-                  ♥ Polubione ({{ likes }})
-                } @else {
-                  ♡ Polub ({{ likes }})
-                }
+                <span class="inline-flex items-center gap-1.5">
+                  @if (userLiked) {
+                    <span class="text-accent" aria-hidden="true">♥</span>
+                  } @else {
+                    <span aria-hidden="true">♡</span>
+                  }
+                  <span>Polub ({{ likes }})</span>
+                </span>
               </button>
               <button
                 type="button"
                 class="btn-secondary text-sm"
-                [disabled]="userSaved || saveBusy"
+                [disabled]="saveBusy"
                 [attr.aria-pressed]="userSaved"
+                [attr.aria-label]="userSaved ? 'Usuń z zapisanych' : 'Zapisz'"
                 (click)="save()"
               >
-                @if (userSaved) {
-                  ★ Zapisane ({{ saves }})
-                } @else {
-                  ☆ Zapisz ({{ saves }})
-                }
+                <span class="inline-flex items-center gap-1.5">
+                  @if (userSaved) {
+                    <span class="text-accent" aria-hidden="true">★</span>
+                  } @else {
+                    <span aria-hidden="true">☆</span>
+                  }
+                  <span>Zapisz ({{ saves }})</span>
+                </span>
               </button>
             </div>
           }

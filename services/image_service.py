@@ -4,8 +4,13 @@ from models.interaction import Interaction
 from models.comment import Comment
 from sqlalchemy import desc, func, or_
 
-def add_image(session, user_id, image_url, description=None, tags=None):
-    new_image = Image(user_id=user_id, image_url=image_url, description=description)
+def add_image(session, user_id, image_url, description=None, tags=None, mime_type=None):
+    new_image = Image(
+        user_id=user_id,
+        image_url=image_url,
+        description=description,
+        mime_type=mime_type,
+    )
     session.add(new_image)
     session.flush()
 
@@ -77,7 +82,12 @@ def get_image(session, image_id):
     return session.query(Image).filter_by(id=image_id).first()
 
 def get_user_images(session, user_id):
-    return session.query(Image).filter_by(user_id=user_id).all()
+    return (
+        session.query(Image)
+        .filter_by(user_id=user_id)
+        .order_by(desc(Image.uploaded_at), desc(Image.id))
+        .all()
+    )
 
 
 def get_user_saved_images(session, user_id):
@@ -111,7 +121,7 @@ def get_feed_images(session, limit=20, offset=0, search_term=None):
             )
         )
     
-    query = query.order_by(desc(Image.id))
+    query = query.order_by(desc(Image.uploaded_at), desc(Image.id))
     
     return query.limit(limit).offset(offset).all()
 

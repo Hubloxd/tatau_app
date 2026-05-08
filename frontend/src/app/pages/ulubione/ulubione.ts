@@ -11,6 +11,7 @@ import {
   type SavedImage,
 } from '../../core/services/favorites-api.service';
 import { DashboardSidebarComponent } from '../../shared/ui/dashboard-sidebar/dashboard-sidebar';
+import { isVideoMime } from '../../shared/util/media-type';
 
 @Component({
   selector: 'app-ulubione',
@@ -20,6 +21,7 @@ import { DashboardSidebarComponent } from '../../shared/ui/dashboard-sidebar/das
 })
 export class UlubioneComponent implements OnInit {
   protected readonly auth = inject(AuthService);
+  protected readonly isVideoMime = isVideoMime;
   private readonly api = inject(FavoritesApiService);
   private readonly cdr = inject(ChangeDetectorRef);
 

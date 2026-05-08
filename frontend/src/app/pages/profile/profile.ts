@@ -15,6 +15,7 @@ import {
   type UserGalleryImage,
 } from '../../core/services/profile-api.service';
 import { SettingsApiService } from '../../core/services/settings-api.service';
+import { isVideoMime } from '../../shared/util/media-type';
 
 @Component({
   selector: 'app-profile',
@@ -24,6 +25,7 @@ import { SettingsApiService } from '../../core/services/settings-api.service';
 })
 export class ProfileComponent implements OnInit, OnDestroy {
   protected readonly auth = inject(AuthService);
+  protected readonly isVideoMime = isVideoMime;
   private readonly api = inject(ProfileApiService);
   private readonly settingsApi = inject(SettingsApiService);
   private readonly route = inject(ActivatedRoute);

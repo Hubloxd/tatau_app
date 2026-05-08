@@ -9,3 +9,4 @@ frontend_old
 .env
 *.md
 uploads
+.venv/

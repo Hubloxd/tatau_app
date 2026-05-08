@@ -56,6 +56,8 @@
                 <app-photo-dropzone
                   #avatarDropzone
                   class="block w-full max-w-md"
+                  accept="image/*"
+                  [showImagePreview]="false"
                   (fileSelected)="onAvatarFile($event)"
                 />
                 @if (avatarUploading) {

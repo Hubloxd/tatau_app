@@ -127,13 +127,24 @@
                 [routerLink]="['/image', img.id]"
                 class="group relative aspect-square overflow-hidden bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               >
-                <img
-                  [src]="img.url"
-                  [alt]="img.description || 'Post użytkownika ' + p.username"
-                  class="h-full w-full object-cover transition group-hover:opacity-95"
-                  loading="lazy"
-                  decoding="async"
-                />
+                @if (isVideoMime(img.mime_type)) {
+                  <video
+                    [src]="img.url"
+                    muted
+                    playsinline
+                    preload="metadata"
+                    class="h-full w-full object-cover transition group-hover:opacity-95"
+                    [attr.aria-label]="img.description || 'Wideo — post użytkownika ' + p.username"
+                  ></video>
+                } @else {
+                  <img
+                    [src]="img.url"
+                    [alt]="img.description || 'Post użytkownika ' + p.username"
+                    class="h-full w-full object-cover transition group-hover:opacity-95"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                }
               </a>
             }
           </div>

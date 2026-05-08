@@ -10,6 +10,7 @@ export interface ImageDetail {
   username: string | null;
   user_type: string | null;
   avatar_url?: string | null;
+  mime_type?: string | null;
 }
 
 export interface ImageDetailResponse {
@@ -73,6 +74,21 @@ export class ImageDetailApiService {
     return this.http.post<{ status: string }>(
       '/interaction/record-interaction',
       null,
+      { params },
+    );
+  }
+
+  removeInteraction(
+    imageId: number,
+    userId: number,
+    interactionType: 'like' | 'save',
+  ): Observable<{ status: string; removed?: boolean }> {
+    const params = new HttpParams()
+      .set('image_id', String(imageId))
+      .set('user_id', String(userId))
+      .set('interaction_type', interactionType);
+    return this.http.delete<{ status: string; removed?: boolean }>(
+      '/interaction/record-interaction',
       { params },
     );
   }

@@ -17,3 +17,4 @@ venv2/*
 uploads/*
 !uploads/.gitkeep
 scripts/__pycache__/
+.venv/
