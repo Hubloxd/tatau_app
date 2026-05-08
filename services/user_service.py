@@ -174,6 +174,20 @@ def search_users_by_term(session, search_term):
         (User.email.ilike(f"%{search_term}%"))
     ).all()
 
+
+def search_users_by_username(session, search_term: str, limit: int = 25):
+    """Wyszukiwanie po nazwie użytkownika (fragment, bez rozróżniania wielkości liter)."""
+    term = (search_term or "").strip()
+    if not term:
+        return []
+    return (
+        session.query(User)
+        .filter(User.username.ilike(f"%{term}%"))
+        .order_by(User.username.asc())
+        .limit(limit)
+        .all()
+    )
+
 def add_follow(session, follower_id, followed_id):
     follower = get_user(session, follower_id)
     followed = get_user(session, followed_id)

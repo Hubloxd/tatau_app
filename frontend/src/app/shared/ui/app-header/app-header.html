@@ -3,11 +3,11 @@
   role="banner"
 >
   <div
-    class="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3 sm:px-6"
+    class="mx-auto flex max-w-5xl flex-wrap items-center gap-3 px-4 py-3 sm:flex-nowrap sm:gap-4 sm:px-6"
   >
     <a
       routerLink="/"
-      class="flex items-center gap-2 text-lg font-semibold tracking-tight text-accent rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+      class="flex shrink-0 items-center gap-2 text-lg font-semibold tracking-tight text-accent rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
     >
       <img
         src="/assets/svg/logo.svg"
@@ -19,7 +19,59 @@
       />
       Tatau
     </a>
-    <nav aria-label="Główna nawigacja" class="flex flex-wrap items-center gap-2 sm:gap-3">
+
+    <div
+      #searchHost
+      class="relative order-3 min-w-0 w-full sm:order-none sm:mx-0 sm:flex-1 sm:max-w-md"
+    >
+      <label class="sr-only" for="nav-user-search">Szukaj użytkownika po nazwie</label>
+      <input
+        id="nav-user-search"
+        type="search"
+        name="userSearch"
+        autocomplete="off"
+        spellcheck="false"
+        [(ngModel)]="searchQuery"
+        (ngModelChange)="onSearchModelChange($event)"
+        (focus)="onSearchFocus()"
+        placeholder="Szukaj użytkownika…"
+        class="input-field w-full py-2 text-sm"
+      />
+      @if (searchFocused && searchQuery.trim().length >= 2) {
+        <div
+          class="absolute left-0 right-0 top-full z-50 mt-1 max-h-72 overflow-auto rounded-lg border border-border bg-card py-1 shadow-lg"
+          role="listbox"
+          aria-label="Wyniki wyszukiwania"
+        >
+          @if (searchLoading) {
+            <p class="px-3 py-2.5 text-sm text-muted" role="status">Szukanie…</p>
+          } @else if (searchResults.length === 0) {
+            <p class="px-3 py-2.5 text-sm text-muted">Brak użytkowników.</p>
+          } @else {
+            <ul role="none" class="py-0.5">
+              @for (u of searchResults; track u.id) {
+                <li role="none">
+                  <button
+                    type="button"
+                    class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-foreground transition hover:bg-accent/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+                    role="option"
+                    (click)="selectUser(u)"
+                  >
+                    <span class="font-medium">{{ u.username }}</span>
+                    <span class="text-xs capitalize text-muted">{{ u.user_type }}</span>
+                  </button>
+                </li>
+              }
+            </ul>
+          }
+        </div>
+      }
+    </div>
+
+    <nav
+      aria-label="Główna nawigacja"
+      class="order-2 ml-auto flex flex-wrap items-center justify-end gap-2 sm:order-none sm:ml-0 sm:shrink-0 sm:gap-3"
+    >
       @if (auth.isLoggedIn()) {
         <a
           routerLink="/home"

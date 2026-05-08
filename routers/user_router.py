@@ -10,7 +10,7 @@ from services.user_service import (
     delete_user,
     get_user,
     authenticate_user,
-    search_users_by_term,
+    search_users_by_username,
     add_follow,
     remove_follow,
     is_following,
@@ -167,7 +167,7 @@ async def login_user(login_data: LoginRequest, db: Session = Depends(get_db_sess
 @router.get("/search")
 async def search_users(term: str = "", db: Session = Depends(get_db_session)):
     try:
-        users = search_users_by_term(db, term)
+        users = search_users_by_username(db, term)
         if not users:
             return JSONResponse(content={"status": "success", "users": []})
         
@@ -175,8 +175,7 @@ async def search_users(term: str = "", db: Session = Depends(get_db_session)):
             {
                 "id": user.id,
                 "username": user.username,
-                "email": user.email,
-                "user_type": user.user_type
+                "user_type": user.user_type,
             }
             for user in users
         ]
