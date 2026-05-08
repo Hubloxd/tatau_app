@@ -6,7 +6,7 @@ from models.tag import Tag
 from models.interaction import Interaction
 import datetime
 
-def get_recommendations(session: Session, user_id: int, limit: int = 20):
+def get_recommendations(session: Session, user_id: int, limit: int = 20, offset: int = 0):
     """
     Generuje spersonalizowane rekomendacje dla użytkownika
 
@@ -18,12 +18,12 @@ def get_recommendations(session: Session, user_id: int, limit: int = 20):
     """
     if not user_id:
         # Dla niezalogowanych użytkowników - popularne i nowe obrazy
-        return get_popular_recent_images(session, limit)
+        return get_popular_recent_images(session, limit, offset=offset)
     
     # Znajdź użytkownika
     user = session.query(User).filter(User.id == user_id).first()
     if not user:
-        return get_popular_recent_images(session, limit)
+        return get_popular_recent_images(session, limit, offset=offset)
 
     # Wyniki będziemy zbierać w słowniku {image_id: score}
     image_scores = {}
@@ -98,26 +98,28 @@ def get_recommendations(session: Session, user_id: int, limit: int = 20):
     # Sortuj obrazy według ich końcowych wag i pobierz pełne obiekty
     sorted_image_ids = sorted(image_scores.keys(), key=lambda x: image_scores[x], reverse=True)
     
-    # Pobierz pełne obiekty obrazów
+    # Pobierz pełne obiekty obrazów (stronicowanie po posortowanej liście)
+    page_ids = sorted_image_ids[offset : offset + limit]
     recommended_images = []
-    for image_id in sorted_image_ids[:limit]:
+    for image_id in page_ids:
         image = session.query(Image).filter(Image.id == image_id).first()
         if image:
             recommended_images.append(image)
     
-    # Jeśli mamy za mało rekomendacji, uzupełnij popularnymi obrazami
-    if len(recommended_images) < limit:
+    # Uzupełnienie tylko na pierwszej stronie (offset == 0), by zachować dotychczasowe zachowanie
+    if offset == 0 and len(recommended_images) < limit:
         fallback_limit = limit - len(recommended_images)
         fallback_images = get_popular_recent_images(
-            session, 
-            fallback_limit, 
-            [img.id for img in recommended_images]
+            session,
+            fallback_limit,
+            [img.id for img in recommended_images],
+            offset=0,
         )
         recommended_images.extend(fallback_images)
     
     return recommended_images
 
-def get_popular_recent_images(session: Session, limit: int, excluded_ids=None):
+def get_popular_recent_images(session: Session, limit: int, excluded_ids=None, offset: int = 0):
     """
     Pobiera popularne i nowe obrazy - dla niezalogowanych użytkowników
     lub jako uzupełnienie dla użytkowników z małą ilością interakcji
@@ -129,11 +131,13 @@ def get_popular_recent_images(session: Session, limit: int, excluded_ids=None):
     now = datetime.datetime.utcnow()
     one_month_ago = now - datetime.timedelta(days=30)
     
-    popular_recent = session.query(Image, func.count(Interaction.id).label('interaction_count'))\
-        .outerjoin(Interaction)\
-        .filter(Image.id.notin_(excluded_ids))\
-        .group_by(Image.id)\
+    q = session.query(Image, func.count(Interaction.id).label('interaction_count'))\
+        .outerjoin(Interaction)
+    if excluded_ids:
+        q = q.filter(Image.id.notin_(excluded_ids))
+    popular_recent = q.group_by(Image.id)\
         .order_by(desc('interaction_count'), desc(Image.id))\
+        .offset(offset)\
         .limit(limit)\
         .all()
     

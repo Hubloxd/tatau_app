@@ -1,0 +1,49 @@
+<div class="relative">
+  <input
+    #fileInput
+    type="file"
+    class="sr-only"
+    accept="image/*"
+    tabindex="-1"
+    (change)="onFileInputChange($event)"
+  />
+  <div
+    role="button"
+    tabindex="0"
+    class="flex min-h-[140px] cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed px-4 py-8 text-center transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+    [ngClass]="
+      dragOver
+        ? 'border-accent bg-accent/5'
+        : 'border-border hover:border-accent/40'
+    "
+    (click)="onZoneClick()"
+    (keydown)="onZoneKeydown($event)"
+    (dragover)="onDragOver($event)"
+    (dragleave)="onDragLeave($event)"
+    (drop)="onDrop($event)"
+  >
+    <svg
+      class="h-10 w-10 text-muted"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.5"
+      aria-hidden="true"
+    >
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3A1.5 1.5 0 001.5 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"
+      />
+    </svg>
+    <p class="text-sm font-medium text-foreground">
+      Przeciągnij zdjęcie tutaj albo <span class="text-accent underline-offset-2 hover:underline">kliknij, aby wybrać</span>
+    </p>
+    <p class="text-xs text-muted">PNG, JPG, WebP i inne formaty obsługiwane przez przeglądarkę</p>
+    @if (fileName) {
+      <p class="mt-1 max-w-full truncate text-sm text-accent" [title]="fileName">
+        Wybrano: {{ fileName }}
+      </p>
+    }
+  </div>
+</div>

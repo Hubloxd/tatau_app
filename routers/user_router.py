@@ -1,36 +1,84 @@
-from google_cloud.client import upload_cs_file, download_cs_file, delete_cs_file, BUCKET_NAME
+import os
+import shutil
+import traceback
+import uuid
+
+from services.storage_backend import store_uploaded_file
 from services.user_service import (
     add_user,
     delete_user,
     get_user,
-    get_user_by_username,
-    get_user_by_email,
-    update_user,
-    set_password,
-    check_password,
     authenticate_user,
     search_users_by_term,
     add_follow,
     remove_follow,
     is_following,
+    update_user_profile,
+    update_user_password,
+    set_user_avatar_url,
 )
 from database import get_db_session
-from fastapi import FastAPI, File, UploadFile
+from fastapi import APIRouter, Depends, File, UploadFile
 from fastapi.responses import JSONResponse
-from fastapi import APIRouter, File, UploadFile, Depends
+from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy.orm import Session
-from pydantic import BaseModel
-import os
-from google.cloud import storage
-import shutil
-import uuid
-import traceback
 
 router = APIRouter(prefix="/user", tags=["user"])
+
 
 class LoginRequest(BaseModel):
     username_or_email: str
     password: str
+
+
+class UserSettingsUpdate(BaseModel):
+    email: EmailStr | None = None
+    bio: str | None = None
+    profile_public: bool | None = None
+
+
+class PasswordChangeRequest(BaseModel):
+    old_password: str
+    new_password: str = Field(..., min_length=8)
+
+
+def _user_public_dict(user):
+    """Pełne dane (logowanie / właściciel)."""
+    return {
+        "id": user.id,
+        "username": user.username,
+        "email": user.email,
+        "user_type": user.user_type,
+        "bio": getattr(user, "bio", None),
+        "avatar_url": getattr(user, "avatar_url", None),
+        "profile_public": getattr(user, "profile_public", True),
+    }
+
+
+def _user_profile_for_viewer(user, viewer_id: int | None):
+    """
+    Widok profilu dla obserwatora. Bez e-maila dla obcych; bio ukryte przy profilu prywatnym
+    (chyba że viewer to właściciel).
+    """
+    is_self = viewer_id is not None and viewer_id == user.id
+    public = getattr(user, "profile_public", True)
+    out = {
+        "id": user.id,
+        "username": user.username,
+        "user_type": user.user_type,
+        "avatar_url": getattr(user, "avatar_url", None),
+        "profile_public": public,
+    }
+    if is_self:
+        out["email"] = user.email
+        out["bio"] = getattr(user, "bio", None)
+        return out
+    if public:
+        out["bio"] = getattr(user, "bio", None)
+    else:
+        out["bio"] = None
+        out["profile_limited"] = True
+    return out
 
 @router.post("/register_user")
 async def register_user(username: str, email: str, password: str, user_type: str, db: Session = Depends(get_db_session)):
@@ -61,16 +109,12 @@ async def login_user(login_data: LoginRequest, db: Session = Depends(get_db_sess
         user = authenticate_user(db, login_data.username_or_email, login_data.password)
         
         if user:
-            # Zwróć podstawowe informacje o użytkowniku
-            return JSONResponse(content={
-                "status": "success",
-                "user": {
-                    "id": user.id,
-                    "username": user.username,
-                    "email": user.email,
-                    "user_type": user.user_type
+            return JSONResponse(
+                content={
+                    "status": "success",
+                    "user": _user_public_dict(user),
                 }
-            })
+            )
         else:
             return JSONResponse(
                 status_code=401,
@@ -121,16 +165,9 @@ async def get_user_details(user_id: int, follower_id: int | None = None, db: Ses
         if follower_id:
             follow_state = is_following(db, follower_id, user_id)
 
-        return JSONResponse(content={
-            "status": "success",
-            "user": {
-                "id": user.id,
-                "username": user.username,
-                "email": user.email,
-                "user_type": user.user_type,
-                "is_following": follow_state
-            }
-        })
+        u = _user_profile_for_viewer(user, follower_id)
+        u["is_following"] = follow_state
+        return JSONResponse(content={"status": "success", "user": u})
     except Exception as e:
         traceback.print_exc()
         return JSONResponse(
@@ -171,3 +208,90 @@ async def update_follow(
             status_code=500,
             content={"status": "error", "message": f"Failed to follow user: {str(e)}"}
         )
+
+
+@router.get("/settings/{user_id}")
+async def get_user_settings(user_id: int, db: Session = Depends(get_db_session)):
+    try:
+        user = get_user(db, user_id)
+        if not user:
+            return JSONResponse(status_code=404, content={"status": "error", "message": "User not found"})
+        return JSONResponse(content={"status": "success", "user": _user_public_dict(user)})
+    except Exception as e:
+        traceback.print_exc()
+        return JSONResponse(status_code=500, content={"status": "error", "message": str(e)})
+
+
+@router.put("/settings/{user_id}")
+async def put_user_settings(
+    user_id: int,
+    body: UserSettingsUpdate,
+    db: Session = Depends(get_db_session),
+):
+    try:
+        if not get_user(db, user_id):
+            return JSONResponse(status_code=404, content={"status": "error", "message": "User not found"})
+        update_user_profile(
+            db,
+            user_id,
+            email=body.email,
+            bio=body.bio,
+            profile_public=body.profile_public,
+        )
+        user = get_user(db, user_id)
+        return JSONResponse(content={"status": "success", "user": _user_public_dict(user)})
+    except ValueError as e:
+        if str(e) == "email_taken":
+            return JSONResponse(
+                status_code=409,
+                content={"status": "error", "message": "Ten adres e-mail jest już zajęty."},
+            )
+        raise
+    except Exception as e:
+        traceback.print_exc()
+        return JSONResponse(status_code=500, content={"status": "error", "message": str(e)})
+
+
+@router.post("/change_password/{user_id}")
+async def change_password(
+    user_id: int,
+    body: PasswordChangeRequest,
+    db: Session = Depends(get_db_session),
+):
+    try:
+        if not get_user(db, user_id):
+            return JSONResponse(status_code=404, content={"status": "error", "message": "User not found"})
+        ok = update_user_password(db, user_id, body.old_password, body.new_password)
+        if not ok:
+            return JSONResponse(
+                status_code=400,
+                content={"status": "error", "message": "Obecne hasło jest nieprawidłowe."},
+            )
+        return JSONResponse(content={"status": "success"})
+    except Exception as e:
+        traceback.print_exc()
+        return JSONResponse(status_code=500, content={"status": "error", "message": str(e)})
+
+
+@router.post("/avatar/{user_id}")
+async def upload_avatar(
+    user_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db_session),
+):
+    try:
+        if not get_user(db, user_id):
+            return JSONResponse(status_code=404, content={"status": "error", "message": "User not found"})
+        temp_filename = f"temp_{uuid.uuid4().hex}_{file.filename}"
+        with open(temp_filename, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        public_url = store_uploaded_file(temp_filename, file.filename or "avatar")
+        os.remove(temp_filename)
+        set_user_avatar_url(db, user_id, public_url)
+        user = get_user(db, user_id)
+        return JSONResponse(
+            content={"status": "success", "avatar_url": public_url, "user": _user_public_dict(user)}
+        )
+    except Exception as e:
+        traceback.print_exc()
+        return JSONResponse(status_code=500, content={"status": "error", "message": str(e)})

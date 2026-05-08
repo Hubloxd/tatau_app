@@ -1,5 +1,11 @@
+import env_bootstrap  # noqa: F401 — musi być przed innymi importami aplikacji
+
+import os
+from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from models import Base, User, Image, Tag, Interaction, image_tags
 from routers.image_routers import router as image_routers
 from routers.user_router import router as user_routers
@@ -7,7 +13,11 @@ from routers.interactions_router import router as interaction_routers
 from routers.comment_router import router as comment_routers
 from sqlalchemy.orm import configure_mappers
 import uvicorn
+
 configure_mappers()
+
+upload_dir = Path(os.getenv("LOCAL_UPLOAD_DIR", "uploads")).resolve()
+upload_dir.mkdir(parents=True, exist_ok=True)
 
 app = FastAPI(
     title="Tatau     App API",
@@ -28,6 +38,8 @@ app.include_router(image_routers)
 app.include_router(user_routers)
 app.include_router(interaction_routers)
 app.include_router(comment_routers)
+
+app.mount("/static", StaticFiles(directory=str(upload_dir)), name="static")
 
 @app.get("/")
 async def root():

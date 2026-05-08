@@ -2,7 +2,7 @@ from models.image import Image
 from models.tag import Tag
 from models.interaction import Interaction
 from models.comment import Comment
-from sqlalchemy import desc, or_
+from sqlalchemy import desc, func, or_
 
 def add_image(session, user_id, image_url, description=None, tags=None):
     new_image = Image(user_id=user_id, image_url=image_url, description=description)
@@ -79,6 +79,21 @@ def get_image(session, image_id):
 def get_user_images(session, user_id):
     return session.query(Image).filter_by(user_id=user_id).all()
 
+
+def get_user_saved_images(session, user_id):
+    """Obrazy zapisane przez użytkownika (interakcja typu save), od najnowszego zapisu."""
+    return (
+        session.query(Image)
+        .join(Interaction, Interaction.image_id == Image.id)
+        .filter(
+            Interaction.user_id == user_id,
+            Interaction.interaction_type == "save",
+        )
+        .group_by(Image.id)
+        .order_by(func.max(Interaction.timestamp).desc())
+        .all()
+    )
+
 def get_feed_images(session, limit=20, offset=0, search_term=None):
     query = session.query(Image)
     
@@ -99,6 +114,49 @@ def get_feed_images(session, limit=20, offset=0, search_term=None):
     query = query.order_by(desc(Image.id))
     
     return query.limit(limit).offset(offset).all()
+
+def get_feed_counts_for_images(session, image_ids: list, user_id: int | None):
+    """
+    Zwraca mapy: liczba komentarzy (tabela comments), liczba polubień (interactions type=like),
+    oraz zbiór id obrazów polubionych przez user_id (jeśli podany).
+    """
+    if not image_ids:
+        return {}, {}, set()
+
+    comment_rows = (
+        session.query(Comment.image_id, func.count(Comment.id))
+        .filter(Comment.image_id.in_(image_ids))
+        .group_by(Comment.image_id)
+        .all()
+    )
+    comment_map = {row[0]: row[1] for row in comment_rows}
+
+    like_rows = (
+        session.query(Interaction.image_id, func.count(Interaction.id))
+        .filter(
+            Interaction.image_id.in_(image_ids),
+            Interaction.interaction_type == 'like',
+        )
+        .group_by(Interaction.image_id)
+        .all()
+    )
+    like_map = {row[0]: row[1] for row in like_rows}
+
+    liked_ids = set()
+    if user_id:
+        liked_rows = (
+            session.query(Interaction.image_id)
+            .filter(
+                Interaction.image_id.in_(image_ids),
+                Interaction.user_id == user_id,
+                Interaction.interaction_type == 'like',
+            )
+            .all()
+        )
+        liked_ids = {row[0] for row in liked_rows}
+
+    return comment_map, like_map, liked_ids
+
 
 def get_images_by_tags(session, tag_names, limit=20, offset=0):
     if not tag_names:

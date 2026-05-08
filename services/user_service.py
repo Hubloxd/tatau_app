@@ -31,10 +31,46 @@ def update_user(session, user_id, username=None, password=None):
         if username:
             user.username = username
         if password:
-            user.set_password(password)
+            user.password_hash = set_password(password)
         session.commit()
         return True
     return False
+
+
+def update_user_profile(session, user_id: int, email=None, bio=None, profile_public=None):
+    user = session.query(User).filter_by(id=user_id).first()
+    if not user:
+        return False
+    if email is not None:
+        existing = get_user_by_email(session, email)
+        if existing and existing.id != user_id:
+            raise ValueError("email_taken")
+        user.email = email
+    if bio is not None:
+        trimmed = bio.strip()[:2000]
+        user.bio = trimmed if trimmed else None
+    if profile_public is not None:
+        user.profile_public = bool(profile_public)
+    session.commit()
+    return True
+
+
+def update_user_password(session, user_id: int, old_password: str, new_password: str):
+    user = session.query(User).filter_by(id=user_id).first()
+    if not user or not check_password(user, old_password):
+        return False
+    user.password_hash = set_password(new_password)
+    session.commit()
+    return True
+
+
+def set_user_avatar_url(session, user_id: int, url: str):
+    user = session.query(User).filter_by(id=user_id).first()
+    if not user:
+        return False
+    user.avatar_url = url
+    session.commit()
+    return True
 
 def set_password(password):
     password_bytes = password.encode('utf-8')

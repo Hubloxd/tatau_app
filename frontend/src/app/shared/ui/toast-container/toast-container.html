@@ -1,0 +1,13 @@
+<div
+  class="pointer-events-none fixed bottom-0 left-0 right-0 z-[100] flex flex-col items-center gap-2 p-4 sm:p-6"
+  aria-live="assertive"
+>
+  @for (t of toast.toasts(); track t.id) {
+    <div
+      role="alert"
+      class="pointer-events-auto max-w-md rounded-lg border border-destructive/40 bg-card px-4 py-3 text-sm text-destructive shadow-lg"
+    >
+      {{ t.message }}
+    </div>
+  }
+</div>

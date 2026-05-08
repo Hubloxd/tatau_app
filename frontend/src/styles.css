@@ -1,0 +1,61 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-background: oklch(0.985 0.004 90);
+  --color-foreground: oklch(0.22 0.02 260);
+  --color-muted: oklch(0.45 0.02 260);
+  --color-border: oklch(0.88 0.01 260);
+  --color-accent: oklch(0.52 0.2 25);
+  --color-accent-hover: oklch(0.46 0.2 25);
+  --color-accent-foreground: oklch(0.99 0 0);
+  --color-card: oklch(1 0 0);
+  --color-destructive: oklch(0.5 0.2 25);
+  --color-ring: oklch(0.52 0.2 25);
+  --font-sans: ui-sans-serif, system-ui, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+@layer base {
+  :root {
+    /* Wysokość topbara (app-header): dopasuj, jeśli zmienisz padding/nawigację */
+    --app-header-height: 4rem;
+  }
+  html {
+    @apply scroll-smooth antialiased;
+  }
+  body {
+    @apply bg-background text-foreground font-sans;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center rounded-lg bg-accent px-4 py-2.5 text-sm font-medium text-accent-foreground shadow-sm transition hover:bg-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center justify-center rounded-lg border border-border bg-card px-4 py-2.5 text-sm font-medium text-foreground shadow-sm transition hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background;
+  }
+  .input-field {
+    @apply w-full rounded-lg border border-border bg-card px-3 py-2.5 text-foreground shadow-sm transition placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background;
+  }
+  .link-accent {
+    @apply font-medium text-accent underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded;
+  }
+  .field-label {
+    @apply mb-1.5 block text-sm font-medium text-foreground;
+  }
+  .field-error {
+    @apply mt-1 text-sm text-destructive;
+  }
+  /**
+   * Pulpit: pełna wysokość pod topbarem, scroll tylko w .dashboard-main-scroll.
+   * Sidebar zostaje przy górze kolumny, nie przewija się z feedem.
+   */
+  .dashboard-shell {
+    @apply flex min-h-0 flex-col overflow-hidden lg:flex-row;
+    height: calc(100dvh - var(--app-header-height));
+    max-height: calc(100dvh - var(--app-header-height));
+  }
+  .dashboard-main-scroll {
+    @apply min-h-0 flex-1 overflow-x-hidden overflow-y-auto;
+  }
+}

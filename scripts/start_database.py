@@ -1,31 +1,17 @@
-from sqlalchemy import create_engine, Column, Integer, String, MetaData, Table, ForeignKey, Date
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, relationship
-from dotenv import load_dotenv
-from urllib.parse import urlparse
-from datetime import datetime
 import os
 import sys
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from models.base import Base
-from models.user import User
-from models.image import Image
-from models.interaction import Interaction
-from models.follow import follows
-from models.image_tag import image_tags
-from models.tag import Tag
-from models.comment import Comment
+from dotenv import load_dotenv
+from sqlalchemy.orm import sessionmaker
 
 load_dotenv()
 
-tmpPostgres = urlparse(os.getenv("DATABASE_URL"))
+from models.base import Base  # noqa: F401
+import models  # noqa: F401 — register all models on Base.metadata
 
-engine = create_engine(
-    f"postgresql+psycopg2://{tmpPostgres.username}:{tmpPostgres.password}@{tmpPostgres.hostname}{tmpPostgres.path}?sslmode=require",
-    echo=True
-)
+from database import engine
 
 Session = sessionmaker(bind=engine)
 session = Session()
