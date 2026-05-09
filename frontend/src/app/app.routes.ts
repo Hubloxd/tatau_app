@@ -43,6 +43,14 @@ export const routes: Routes = [
       import('./pages/ulubione/ulubione').then((m) => m.UlubioneComponent),
   },
   {
+    path: 'generator',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./pages/tattoo-generator/tattoo-generator').then(
+        (m) => m.TattooGeneratorComponent,
+      ),
+  },
+  {
     path: 'image/:imageId',
     loadComponent: () =>
       import('./pages/image-detail/image-detail').then(

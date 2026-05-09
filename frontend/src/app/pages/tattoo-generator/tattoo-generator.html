@@ -1,0 +1,126 @@
+@if (auth.user()) {
+  <div class="dashboard-shell">
+    <app-dashboard-sidebar />
+
+    <main
+      id="main-content"
+      class="dashboard-main-scroll order-1 min-w-0 lg:order-2"
+      tabindex="-1"
+    >
+      <div class="mx-auto max-w-3xl px-4 pb-12 pt-6 sm:px-6">
+        <header class="mb-6">
+          <h1 class="text-2xl font-semibold tracking-tight text-foreground">Inspiracje AI</h1>
+          <p class="mt-1 text-sm text-muted">
+            Wybierz miejsce i styl — AI wygeneruje dla Ciebie projekt tatuażu.
+          </p>
+        </header>
+
+        <!-- Formularz -->
+        <section
+          class="rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-6"
+          aria-labelledby="generator-heading"
+        >
+          <h2 id="generator-heading" class="text-sm font-semibold text-foreground">
+            Konfiguruj projekt
+          </h2>
+
+          <div class="mt-4 grid gap-4 sm:grid-cols-2">
+            <label class="block">
+              <span class="field-label">Część ciała <span class="text-destructive">*</span></span>
+              <select class="input-field mt-1" [(ngModel)]="selectedBodyPart" name="bodyPart">
+                <option value="" disabled>Wybierz…</option>
+                @for (part of bodyParts; track part.value) {
+                  <option [value]="part.value">{{ part.label }}</option>
+                }
+              </select>
+            </label>
+
+            <label class="block">
+              <span class="field-label">Styl <span class="text-destructive">*</span></span>
+              <select class="input-field mt-1" [(ngModel)]="selectedStyle" name="style">
+                <option value="" disabled>Wybierz…</option>
+                @for (style of styles; track style.value) {
+                  <option [value]="style.value">{{ style.label }}</option>
+                }
+              </select>
+            </label>
+          </div>
+
+          <label class="mt-4 block">
+            <span class="field-label">Dodatkowy opis (opcjonalnie)</span>
+            <textarea
+              class="input-field mt-1 min-h-[80px] resize-y"
+              rows="3"
+              [(ngModel)]="description"
+              name="description"
+              placeholder="Np. róża oplatająca węża, motyw natury, czarno-biały…"
+            ></textarea>
+          </label>
+
+          <div class="mt-5 flex items-center gap-3">
+            <button
+              type="button"
+              class="btn-primary"
+              [disabled]="!canGenerate"
+              [attr.aria-busy]="generating"
+              (click)="generate()"
+            >
+              @if (generating) {
+                <span
+                  class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
+                  aria-hidden="true"
+                ></span>
+                Generowanie…
+              } @else {
+                Generuj
+              }
+            </button>
+
+            @if (imageUrl || error) {
+              <button type="button" class="btn-secondary text-sm" (click)="reset()">
+                Wyczyść
+              </button>
+            }
+          </div>
+        </section>
+
+        <!-- Błąd -->
+        @if (error) {
+          <div
+            class="mt-6 rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive"
+            role="alert"
+          >
+            {{ error }}
+          </div>
+        }
+
+        <!-- Wynik -->
+        @if (imageUrl) {
+          <section
+            class="mt-6 rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-6"
+            aria-labelledby="result-heading"
+          >
+            <h2 id="result-heading" class="mb-4 text-sm font-semibold text-foreground">
+              Wygenerowany projekt
+            </h2>
+            <img
+              [src]="imageUrl"
+              alt="Wygenerowany projekt tatuażu"
+              class="w-full rounded-xl border border-border object-contain"
+            />
+            <div class="mt-4 flex justify-end">
+              <a
+                [href]="imageUrl"
+                target="_blank"
+                rel="noopener"
+                class="btn-secondary text-sm"
+              >
+                Otwórz pełny rozmiar
+              </a>
+            </div>
+          </section>
+        }
+      </div>
+    </main>
+  </div>
+}
