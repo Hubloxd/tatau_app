@@ -1,9 +1,13 @@
+import base64
 import logging
 import os
+import tempfile
 
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse
 from openai import OpenAI, OpenAIError
+
+from services.storage_backend import store_uploaded_file
 
 logger = logging.getLogger(__name__)
 
@@ -43,17 +47,31 @@ def generate_tattoo(body_part: str, style: str, description: str = ""):
 
     prompt = _build_prompt(body_part, style, description)
 
+    model = os.environ.get("OPENAI_IMAGE_MODEL", "gpt-image-1")
+
     try:
         response = _get_client().images.generate(
-            model="dall-e-3",
+            model=model,
             prompt=prompt,
             size="1024x1024",
-            quality="standard",
+            quality="medium",
             n=1,
         )
-        image_url = response.data[0].url
+        image_b64 = response.data[0].b64_json
+        if not image_b64:
+            raise HTTPException(status_code=502, detail="OpenAI nie zwróciło obrazu.")
     except OpenAIError as e:
         logger.error("Błąd OpenAI API: %s", e)
         raise HTTPException(status_code=502, detail=f"Błąd OpenAI: {e}")
+
+    tmp_path: str | None = None
+    try:
+        with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
+            tmp.write(base64.b64decode(image_b64))
+            tmp_path = tmp.name
+        image_url = store_uploaded_file(tmp_path, "tattoo.png")
+    finally:
+        if tmp_path:
+            os.unlink(tmp_path)
 
     return JSONResponse({"image_url": image_url})
