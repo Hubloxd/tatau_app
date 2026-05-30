@@ -11,6 +11,7 @@ from routers.image_routers import router as image_routers
 from routers.user_router import router as user_routers
 from routers.interactions_router import router as interaction_routers
 from routers.comment_router import router as comment_routers
+from routers.tattoo_generator_router import router as tattoo_generator_router
 from sqlalchemy.orm import configure_mappers
 import uvicorn
 
@@ -38,6 +39,7 @@ app.include_router(image_routers)
 app.include_router(user_routers)
 app.include_router(interaction_routers)
 app.include_router(comment_routers)
+app.include_router(tattoo_generator_router)
 
 app.mount("/static", StaticFiles(directory=str(upload_dir)), name="static")
 

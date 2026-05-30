@@ -41,6 +41,14 @@
           Ulubione
         </a>
         <a
+          routerLink="/generator"
+          routerLinkActive="rounded-lg bg-accent/10 px-3 py-2 text-sm font-medium text-accent lg:w-full lg:text-left"
+          [routerLinkActiveOptions]="{ exact: true }"
+          class="shrink-0 whitespace-nowrap rounded-lg px-3 py-2 text-sm text-muted hover:bg-background hover:text-foreground lg:w-full lg:text-left"
+        >
+          Inspiracje AI
+        </a>
+        <a
           routerLink="/explore"
           routerLinkActive="rounded-lg bg-accent/10 px-3 py-2 text-sm font-medium text-accent lg:w-full lg:text-left"
           [routerLinkActiveOptions]="{ exact: true }"
